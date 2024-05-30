@@ -2,7 +2,7 @@ get_adj_mat = function(county.adjacency,Countyvec,Statevec){
   if(!is.data.frame(county.adjacency)){stop("county.adjacency must be a data frame")}
   if(!is.character(Countyvec)){stop("Countyvec must be a character vector")}
   if(!is.character(Statevec)){stop("Statevec must be a character vector")}
-
+  get(USAcities)
   if(prod(Countyvec %in% USAcities$county_name) != 1){"County names do not match"}
   if(prod(Statevec %in% USAcities$state_id) != 1){"State abbreviations do not match"}
 

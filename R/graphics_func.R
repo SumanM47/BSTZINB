@@ -11,6 +11,7 @@ USDmapCount = function(state.sel,dat,scol,tcol,tsel=NULL,cname,uplim=NULL){
   if(is.null(dat$sid)){stop("dat must have an entry named sid")}
   if(is.null(dat$tid)){stop("dat must have an entry named tid")}
   if(prod(toupper(state.sel) %in% state.abb) != 1){stop("State abbreviation does not match")}
+  get(USAcities)
   if(prod(toupper(cname) %in% toupper(USAcities$county_name)) != 1){stop("County names do not match")}
 
   if(is.null(uplim)){
@@ -56,6 +57,7 @@ qRankPar = function(state.set,ns,nt,cname,stfit,vn=12){
   if(!is.numeric(vn)){stop("vn must be a positive integer")}
   if(vn <= 0){stop("vn must be a positive integer")}
   if(prod(toupper(state.set) %in% state.abb) != 1){stop("State abbreviation does not match")}
+  get(USAcities)
   if(prod(toupper(cname) %in% toupper(USAcities$county_name)) != 1){stop("County names do not match")}
 
 
@@ -84,6 +86,7 @@ qRankParTop = function(state.set,ns,nt,cname,stfit,vn=12){
   if(!is.numeric(vn)){stop("vn must be a positive integer")}
   if(vn <= 0){stop("vn must be a positive integer")}
   if(prod(toupper(state.set) %in% state.abb) != 1){stop("State abbreviation does not match")}
+  get(USAcities)
   if(prod(toupper(cname) %in% toupper(USAcities$county_name)) != 1){stop("County names do not match")}
 
   qij.mat <- matrix(inv.logit(apply(stfit$Eta1,2,mean)),nrow=ns)
@@ -109,6 +112,7 @@ TimetrendCurve = function(stfit,ns,nt,countyname,vn=5,smooth.mode=TRUE){
   if(!is.numeric(vn)){stop("vn must be a positive integer")}
   if(vn <= 0){stop("vn must be a positive integer")}
   if(!is.logical(smooth.mode)){stop("smooth.mode must be TRUE/FALSE")}
+  get(USAcities)
   if(prod(toupper(countyname) %in% toupper(USAcities$county_name)) != 1){stop("County names do not match")}
 
 
