@@ -1,8 +1,23 @@
+
+#' @title Adjacency matrix for counties of one or many states in the United States
+#'
+#' @description
+#' Creates the adjacency matrix for the supplied counties within the United States using the available neighborhood information
+#'
+#' @usage get_adj_mat(county.adjacency,Countyvec,Statevec)
+#'
+#' @param county.adjacency data frame containing the neighborhood information for the counties of the entire US
+#' @param Countyvec character vector containing the names of the counties for which the adjacency matrix is to be computed
+#' @param Statevec character vector containing the names of the states the supplied counties belong to
+#'
+#'
+#' @return the corresponding adjacency matrix
+#' @export
 get_adj_mat = function(county.adjacency,Countyvec,Statevec){
   if(!is.data.frame(county.adjacency)){stop("county.adjacency must be a data frame")}
   if(!is.character(Countyvec)){stop("Countyvec must be a character vector")}
   if(!is.character(Statevec)){stop("Statevec must be a character vector")}
-  get(USAcities)
+  USAcities <- BSTZINB::USAcities
   if(prod(Countyvec %in% USAcities$county_name) != 1){"County names do not match"}
   if(prod(Statevec %in% USAcities$state_id) != 1){"State abbreviations do not match"}
 
@@ -30,7 +45,20 @@ get_adj_mat = function(county.adjacency,Countyvec,Statevec){
 }
 
 
-
+#' @title Summary Table for a fitted object
+#'
+#' @description
+#' Generates a short summary table for a fitted object using BSTP, BSTNB or BSTZINB function
+#'
+#' @usage ResultTableSummary(bstfit)
+#'
+#' @param bstfit fitted object using the function BSTP, BSTNB or BSTZINB
+#'
+#' @import dplyr
+#' @import gtsummary
+#'
+#' @return summary table
+#' @export
 ResultTableSummary = function(bstfit){
   if(is.null(bstfit$Alpha)){stop("bstfit must have a named component Alpha")}
   if(is.null(bstfit$Beta)){stop("bstfit must have a named component Beta")}
@@ -52,7 +80,39 @@ ResultTableSummary = function(bstfit){
 }
 
 
-ResultTableSummary2 = function(y, X, A, nt, nchain=3, nsim=10, nburn=0, nthin=1){
+#' @title Generate a summary table of the outputs all different methods given the data
+#'
+#' @description
+#' Fits BSTP, BSTNB and BSTZINB (with linear or non-linear temporal trend) to a given data and summarizes the results in a table
+#'
+#' @usage ResultTableSummary2(y,X,A,nt,
+#'                            nchain=3,nsim=100,nburn=20,nthin=1)
+#'
+#' @param y vector of 0s and 1s or two categories (will be coerced to 0-1)
+#' @param X matrix of covariates, numeric
+#' @param A adjacency matrix, numeric
+#' @param nt positive integer, number of time points
+#' @param nchain positive integer, number of MCMC chains to be run
+#' @param nsim positive integer, number of iterations in each chain
+#' @param nburn non-negative integer, number of iterations to be discarded as burn-in samples
+#' @param nthin positive integer, thinning interval
+#'
+#' @import dplyr
+#' @import gtsummary
+#' @import mvtnorm
+#' @import BayesLogit
+#' @import spam
+#' @import MCMCpack
+#' @import msm
+#' @import splines
+#' @import boot
+#' @import gt
+#' @import matrixcalc
+#'
+#'
+#' @return summary tables for the different methods
+#' @export
+ResultTableSummary2 = function(y, X, A, nt, nchain=3, nsim=100, nburn=20, nthin=1){
 
   if(!is.vector(y)){stop("y must be a vector")}
   if(!is.matrix(X)){stop("X must be a matrix")}
@@ -75,7 +135,7 @@ ResultTableSummary2 = function(y, X, A, nt, nchain=3, nsim=10, nburn=0, nthin=1)
   colnames(temp4) <- c("a.t",paste("a",colnames(alphamat),sep="."),"b.t",paste("b",colnames(betamat),sep="."))
   temp4[,paste("a",colnames(alphamat),sep=".")] <- alphamat
   temp4[,paste("b",colnames(betamat),sep=".")]  <- betamat
-  DIC4 = compute.ZINB.DIC(stfit4,(nsim-nburn)/nthin,nchain)
+  DIC4 = compute_ZINB_DIC(y,stfit4,(nsim-nburn)/nthin,nchain)
   ind4 = rep(NA,ncol(temp4)); names(ind4) <-  colnames(temp4)
   ind4[paste("a",colnames(alphamat),sep=".")] <- conv.test(stfit4$Alpha)
   ind4[paste("b",colnames(betamat),sep=".")] <- conv.test(stfit4$Beta)
@@ -87,7 +147,7 @@ ResultTableSummary2 = function(y, X, A, nt, nchain=3, nsim=10, nburn=0, nthin=1)
   colnames(temp3) <- colnames(temp4)
   temp3[,paste("a",colnames(alphamat),sep=".")] <- alphamat
   temp3[,paste("b",colnames(betamat),sep=".")]  <- betamat
-  DIC3 = compute.ZINB.DIC(stfit3,(nsim-nburn)/nthin,nchain)
+  DIC3 = compute_ZINB_DIC(y,stfit3,(nsim-nburn)/nthin,nchain)
   ind3 = rep(NA,length(ind4)); names(ind3) <- names(ind4)
   ind3[paste("a",colnames(alphamat),sep=".")] <- conv.test(stfit3$Alpha)
   ind3[paste("b",colnames(betamat),sep=".")] <- conv.test(stfit3$Beta)
@@ -97,7 +157,7 @@ ResultTableSummary2 = function(y, X, A, nt, nchain=3, nsim=10, nburn=0, nthin=1)
   temp2 <- data.frame(matrix(NA,nrow(temp4),ncol(temp4)))
   colnames(temp2) <- colnames(temp4)
   temp2[,paste("b",colnames(betamat),sep=".")] <- betamat
-  DIC2 = compute.NB.DIC(stfit2,(nsim-nburn)/nthin,nchain)
+  DIC2 = compute_NB_DIC(y,stfit2,(nsim-nburn)/nthin,nchain)
   ind2 = rep(NA,length(ind4)); names(ind2) <- names(ind4)
   ind2[paste("b",colnames(betamat),sep=".")] <- conv.test(stfit2$Beta)
 
@@ -106,7 +166,7 @@ ResultTableSummary2 = function(y, X, A, nt, nchain=3, nsim=10, nburn=0, nthin=1)
   temp1 <- data.frame(matrix(NA,nrow(temp4),ncol(temp4)))
   colnames(temp1) <- colnames(temp4)
   temp1[,paste("b",colnames(betamat),sep=".")] <- betamat
-  DIC1 = compute.NB.DIC(stfit1,(nsim-nburn)/nthin,nchain)
+  DIC1 = compute_NB_DIC(y,stfit1,(nsim-nburn)/nthin,nchain)
   ind1 = rep(NA,length(ind4)); names(ind1) <- names(ind4)
   ind1[paste("b",colnames(betamat),sep=".")] <- conv.test(stfit1$Beta)
 
@@ -159,70 +219,109 @@ ResultTableSummary2 = function(y, X, A, nt, nchain=3, nsim=10, nburn=0, nthin=1)
 
 }
 
+#' @title DIC for BSTZINB fitted objects
+#'
+#' @description
+#' Computes DIC for a BSTZINB fitted object
+#'
+#' @usage compute_ZINB_DIC(y,fit,lastit,nchain)
+#'
+#' @param y vector of 0s and 1s or two categories (will be coerced to 0-1), the response used for fitting a BSTZINB model
+#' @param fit BSTZINB fitted object
+#' @param lastit positive integer, size of the chain used to fit BSTZINB
+#' @param nchain positive integer, number of chains used to fit BSTZINB
+#'
+#' @import boot
+#' @import stats
+#'
+#' @return DIC value
+#' @export
+compute_ZINB_DIC = function(y,fit,lastit,nchain){
 
-compute.ZINB.DIC = function(fit,lastit,nchain){
-
+  if(is.null(y)){stop("y must be provided")}
+  if(!is.vector(y)){stop("y must be a vector")}
+  if(sum(is.na(y))>0){naind <- which(is.na(y)); if(length(unique(y[-naind]))!=2)stop("y must have two categories")} else{if(length(unique(y))!=2)stop("y must have two categories")}
+  y <- as.numeric(y)
   if(is.null(fit$Eta1)){stop("fit must have a named component Eta1")}
   if(is.null(fit$Eta2)){stop("fit must have a named component Eta2")}
   if(is.null(fit$R)){stop("fit must have a named component R")}
   if(!is.numeric(lastit) | lastit <= 0){stop("lastit must be a positive integer")}
   if(!is.numeric(nchain) | nchain <= 0){stop("nchain must be a positive integer")}
 
-  computeD.avg = function(fit){
+  computeD.avg = function(y,fit){
     eta1.mean <- apply(fit$Eta1,2,mean)
     eta2.mean <- apply(fit$Eta2,2,mean)
     r.mean    <- mean(fit$R)
-    pi = gtools::inv.logit(eta1.mean)
+    pii = boot::inv.logit(eta1.mean)
     q <- pmax(0.01,pmin(0.99,1/(1+exp(eta2.mean))))
     I = fit$I[dim(fit$I)[1],,nchain]
     dNB = dnbinom(y[I==1],r.mean,q[I==1],log=T)
-    comp1 = log(1-pi[I==0])
-    comp2 = (log(pi[I==1])+dNB)
+    comp1 = log(1-pii[I==0])
+    comp2 = (log(pii[I==1])+dNB)
     # (-2)*(sum(comp1)+sum(comp2))
     (-2)*sum(comp2)
   }
-  computeD.indiv = function(fit,iter,chain){
+  computeD.indiv = function(y,fit,iter,chain){
     eta1 <- fit$Eta1[iter,,chain]
     eta2 <- fit$Eta2[iter,,chain]
     r    <- fit$R[iter,chain]
-    pi = gtools::inv.logit(eta1)
+    pii = boot::inv.logit(eta1)
     q <- pmax(0.01,pmin(0.99,1/(1+exp(eta2))))
     I = fit$I[iter,,chain]
     dNB = dnbinom(y[I==1],r,q[I==1],log=T)
-    comp1 = log(1-pi[I==0])
-    comp2 = (log(pi[I==1])+dNB)
+    comp1 = log(1-pii[I==0])
+    comp2 = (log(pii[I==1])+dNB)
     # (-2)*(sum(comp1)+sum(comp2))
     (-2)*sum(comp2)
   }
   Dmat = matrix(0,lastit,nchain)
   for(iter in 1:lastit){
     for(chain in 1:nchain){
-      Dmat[iter,chain] = computeD.indiv(fit,iter,chain)
+      Dmat[iter,chain] = computeD.indiv(y,fit,iter,chain)
     }
   }
 
-  comp1 = computeD.avg(fit)
+  comp1 = computeD.avg(y,fit)
   comp2 = mean(Dmat)
   DIC = comp1 + 2*( comp2 - comp1)
   return(DIC)
 }
 
+#' @title DIC for BSTNB or BSTP fitted objects
+#'
+#' @description
+#' Computes DIC for a BSTNB or BSTP fitted object
+#'
+#' @usage compute_NB_DIC(y,fit,lastit,nchain)
+#'
+#' @param y vector of 0s and 1s or two categories (will be coerced to 0-1), the response used for fitting a BSTNB model
+#' @param fit BSTNB or BSTP fitted object
+#' @param lastit positive integer, size of the chain used to fit BSTZINB
+#' @param nchain positive integer, number of chains used to fit BSTZINB
+#'
+#' @import stats
+#'
+#' @return DIC value
+#' @export
+compute_NB_DIC = function(y,fit,lastit,nchain){
 
-compute.NB.DIC = function(fit,lastit,nchain){
-
+  if(is.null(y)){stop("y must be provided")}
+  if(!is.vector(y)){stop("y must be a vector")}
+  if(sum(is.na(y))>0){naind <- which(is.na(y)); if(length(unique(y[-naind]))!=2)stop("y must have two categories")} else{if(length(unique(y))!=2)stop("y must have two categories")}
+  y <- as.numeric(y)
   if(is.null(fit$Eta1)){stop("fit must have a named component Eta1")}
   if(is.null(fit$R)){stop("fit must have a named component R")}
   if(!is.numeric(lastit) | lastit <= 0){stop("lastit must be a positive integer")}
   if(!is.numeric(nchain) | nchain <= 0){stop("nchain must be a positive integer")}
 
-  computeD.avg = function(fit){
+  computeD.avg = function(y,fit){
     eta.mean <- apply(fit$Eta1,2,mean)
     r.mean   <- mean(fit$R)
     q <- pmax(0.01,pmin(0.99,1/(1+exp(eta.mean))))
     dNB = dnbinom(y,r.mean,q,log=T)
     (-2)*sum(dNB)
   }
-  computeD.indiv = function(fit,iter,chain){
+  computeD.indiv = function(y,fit,iter,chain){
     eta  <- fit$Eta1[iter,,chain]
     r    <- fit$R[iter,chain]
     q <- pmax(0.01,pmin(0.99,1/(1+exp(eta))))
@@ -232,18 +331,32 @@ compute.NB.DIC = function(fit,lastit,nchain){
   Dmat = matrix(0,lastit,nchain)
   for(iter in 1:lastit){
     for(chain in 1:nchain){
-      Dmat[iter,chain] = computeD.indiv(fit,iter,chain)
+      Dmat[iter,chain] = computeD.indiv(y,fit,iter,chain)
     }
   }
 
-  comp1 = computeD.avg(fit)
+  comp1 = computeD.avg(y,fit)
   comp2 = mean(Dmat)
   DIC = comp1 + 2*( comp2 - comp1)
   return(DIC)
 
 }
 
-
+#' @title convergence test for parameters in the fitted objects
+#'
+#' @description
+#' Conducts a test of convergence for a given parameter in the fitted objects using the posterior samples for the said parameter
+#'
+#' @usage conv.test(params,nchain=3,thshold=1.96)
+#'
+#' @param params numeric matrix of dimension 2 (iterations x number of parameters, single chain) or 3 (iterations x number of parameters x chain, multiple chains) of posterior samples
+#' @param nchain positive integer, number of chains used to fit BSTZINB, BSTNB or BSTP
+#' @param thshold positive scalar, the threshold for testing the convergence. Defaults to 1.96
+#'
+#' @import coda
+#'
+#' @return logical vector indicating whether convergence was achieved or not
+#' @export
 conv.test = function(params,nchain=3,thshold=1.96){
 
   if(!is.numeric(nchain) | nchain <= 0){stop("nchain must be a positive integer")}

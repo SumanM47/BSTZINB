@@ -1,13 +1,32 @@
 Package: BSTZINB
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Estimates association between COVID-19 death counts and socail and environmental risk factors
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Authors@R: c(
+    person("Suman","Majumder",email="smajumd2@gmail.com",role=c("cre","aut")),
+    person("Yoon-Bae","Jun",role="aut")
+    )
+Description: This package contains functions to estimate association between COVID-19 death counts and social and environmental risk factos using a Bayesian spatiotemporal model. Function to produce corresponding maps are also included.
+License: GPL (>=3)
 Encoding: UTF-8
 LazyData: true
 Depends: 
     R (>= 2.10)
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.1
+Imports: 
+    BayesLogit,
+    boot,
+    coda,
+    dplyr,
+    ggplot2,
+    gt,
+    gtsummary,
+    maps,
+    matrixcalc,
+    MCMCpack,
+    msm,
+    mvtnorm,
+    reshape,
+    spam,
+    viridis

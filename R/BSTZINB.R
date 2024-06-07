@@ -1,4 +1,35 @@
-BSTZINB = function(y, X, A, nt, LinearT = TRUE, nchain=3, nsim=100, nburn=0, nthin=1){
+#' @name BSTZINB
+#' @title Fit a Bayesian Spatiotemporal Zero Inflated Negative Binomial model
+#'
+#' @description
+#' Generate posterior samples for the parameters in a Bayesian Spatiotemporal Zero Inflated Negative Binomial Model
+#'
+#' @usage BSTZINB(y,X,A,nt,LinearT = TRUE,
+#'             nchain=3,nsim=100,nburn=20,nthin=1)
+#'
+#' @param y vector of 0s and 1s or two categories (will be coerced to 0-1)
+#' @param X matrix of covariates, numeric
+#' @param A adjacency matrix, numeric
+#' @param nt positive integer, number of time points
+#' @param LinearT logical, whether to fit a linear or non-linear temporal trend
+#' @param nchain positive integer, number of MCMC chains to be run
+#' @param nsim positive integer, number of iterations in each chain
+#' @param nburn non-negative integer, number of iterations to be discarded as burn-in samples
+#' @param nthin positive integer, thinning interval
+#'
+#' @import dplyr
+#' @import mvtnorm
+#' @import BayesLogit
+#' @import spam
+#' @import MCMCpack
+#' @import msm
+#' @import splines
+#' @import boot
+#' @import matrixcalc
+#'
+#' @return list of posterior samples of the parameters of the model
+#' @export
+BSTZINB = function(y, X, A, nt, LinearT = TRUE, nchain=3, nsim=100, nburn=20, nthin=1){
 
   ## Run the necessary checks
   if(!is.vector(y)){stop("y must be a vector")}
@@ -138,7 +169,7 @@ BSTZINB = function(y, X, A, nt, LinearT = TRUE, nchain=3, nsim=100, nburn=0, nth
       # Update at-risk indicator y1 (W in paper)
       eta1<-Xtilde%*%alpha+Phi1+Phi2*t
       eta2<-Xtilde%*%beta+Phi3+Phi4*t              # Use all n observations
-      pi<-pmax(0.01,pmin(0.99,inv.logit(eta1)))  # at-risk probability
+      pi<-pmax(0.01,pmin(0.99,boot::inv.logit(eta1)))  # at-risk probability
       q<-pmax(0.01,pmin(0.99,1/(1+exp(eta2))))                      # Pr(y=0|y1=1)
       theta<-pi*(q^r)/(pi*(q^r)+1-pi)         # Conditional prob that y1=1 given y=0 -- i.e. Pr(chance zero|observed zero)
       y1[y==0]<-rbinom(N0,1,theta[y==0])      # If y=0, then draw a "chance zero" w.p. theta, otherwise y1=1

@@ -1,4 +1,31 @@
-BSTP = function(y, X, A, nt, nchain=3, nsim=100, nburn=0, nthin=1){
+#' @name BSTP
+#' @title Fit a Bayesian Spatiotemporal Poisson model
+#'
+#' @description
+#' Generate posterior samples for the parameters in a Bayesian Spatiotemporal Poisson Model
+#'
+#' @usage BSTP(y,X,A,nt,
+#'             nchain=3,nsim=100,nburn=20,nthin=1)
+#'
+#' @param y vector of 0s and 1s or two categories (will be coerced to 0-1)
+#' @param X matrix of covariates, numeric
+#' @param A adjacency matrix, numeric
+#' @param nt positive integer, number of time points
+#' @param nchain positive integer, number of MCMC chains to be run
+#' @param nsim positive integer, number of iterations in each chain
+#' @param nburn non-negative integer, number of iterations to be discarded as burn-in samples
+#' @param nthin positive integer, thinning interval
+#'
+#' @import dplyr
+#' @import mvtnorm
+#' @import BayesLogit
+#' @import spam
+#' @import MCMCpack
+#' @import matrixcalc
+#'
+#' @return list of posterior samples of the parameters of the model
+#' @export
+BSTP = function(y, X, A, nt, nchain=3, nsim=100, nburn=20, nthin=1){
 
   ## Run the necessary checks
   if(!is.vector(y)){stop("y must be a vector")}
@@ -30,6 +57,8 @@ BSTP = function(y, X, A, nt, nchain=3, nsim=100, nburn=0, nthin=1){
   T0a<-diag(.01,p)
   T0b<-diag(.01,p)         # Uniform or Gamma(0.01,0.01) prior for r depending on MH or Gibbs
   s<-0.0003                # Proposal variance  -- NOTE: may need to lower this as n_i increases
+  kappa<-.999999
+  Q<-as.spam(diag(apply(A,1,sum)))-kappa*as.spam(A)
 
   ############
   # Num Sims #
@@ -103,8 +132,8 @@ BSTP = function(y, X, A, nt, nchain=3, nsim=100, nburn=0, nthin=1){
       priorprec<-as.numeric(1/(Sigmaphi[2,2]-Sigmaphi[2,-2]%*%solve(Sigmaphi[-2,-2])%*%Sigmaphi[-2,2]))*Q # Prior Prec of phi4|phi1,phi2,phi3
       priormean<-diag(n)%x%(Sigmaphi[2,-2]%*%solve(Sigmaphi[-2,-2]))%*%c(t(phimat[,-2]))      # Prior mean of phi4|phi1,phi2,phi3
 
-      prec<-priorprec+as.spam(diag(tapply(w*x^2,sid,sum),n,n))
-      tmp<-tapply(x*w*(z-X%*%beta-Phi3),sid,sum)
+      prec<-priorprec+as.spam(diag(tapply(w*t^2,sid,sum),n,n))
+      tmp<-tapply(t*w*(z-X%*%beta-Phi3),sid,sum)
       m<-c(priorprec%*%priormean)+tmp
       if(is.positive.definite(prec%>%as.matrix)) phi4<-rmvnorm.canonical(1, m, prec)[1,]
 
