@@ -55,13 +55,13 @@ USDmapCount = function(state.sel,dat,scol,tcol=NULL,tsel=NULL,cname,uplim=NULL){
   }else{
     zinb.summary     = dat %>% dplyr::group_by(sid) %>% dplyr::filter(tid==tsel)
     zinb.summary$cnt = zinb.summary$y
-    zinb.summary = zinb.summary %>% dplyr::select(zinb.summary$sid,zinb.summary$cnt)
+    zinb.summary = zinb.summary %>% dplyr::select(sid,cnt)
   }
 
   zinb.summary$cid = tolower(cname[zinb.summary$sid])
   map.df  <- dplyr::left_join(state.map, zinb.summary, by = c("subregion"="cid"))
-  p <- ggplot2::ggplot(data = map.df, aes(x = map.df$long, y = map.df$lat, group=map.df$group)) +
-    ggplot2::geom_polygon(aes(fill = map.df$cnt), color="black") +
+  p <- ggplot2::ggplot(data = map.df, aes(x = long, y = lat, group=group)) +
+    ggplot2::geom_polygon(aes(fill = cnt), color="black") +
     ggplot2::scale_fill_gradientn(colours = viridis::viridis(25))+
     ggplot2::theme_bw() +
     ggplot2::labs(fill= "",
@@ -115,7 +115,7 @@ qRankPar = function(state.set,ns,nt,cname,stfit,vn=12){
   zinb.summary.sample = zinb.summary[floor(seq(1,ns,length.out=vn)),]
 
   par(mfrow=c(1,1),mar=c(3,5,1,1))
-  p <- ggplot2::ggplot(zinb.summary.sample,aes(x=reorder(zinb.summary$County, zinb.summary$m), y=zinb.summary$m, fill=zinb.summary$County)) + ggplot2::geom_bar(alpha=0.8,stat="identity") +
+  p <- ggplot2::ggplot(zinb.summary.sample,aes(x=reorder(County, m), y=m, fill=County)) + ggplot2::geom_bar(alpha=0.8,stat="identity") +
     ggplot2::xlab("") + ggplot2::ylab("Probability at risk") + ggplot2::ylim(0,1) + ggplot2::theme_bw() + ggplot2::theme(legend.position = "")
   return(p + ggplot2::coord_flip()+ggplot2::theme(axis.title.x = element_text(size=24),
                                 axis.text.x = element_text(size=24),
@@ -165,7 +165,7 @@ qRankParTop = function(state.set,ns,nt,cname,stfit,vn=12){
   zinb.summary.sample = zinb.summary[c(1:vn),]
 
   par(mfrow=c(1,1),mar=c(3,5,1,1))
-  p <- ggplot2::ggplot(zinb.summary.sample,aes(x=reorder(zinb.summary$County, zinb.summary$m), y=zinb.summary$m, fill=zinb.summary$County)) + ggplot2::geom_bar(alpha=0.8,stat="identity") +
+  p <- ggplot2::ggplot(zinb.summary.sample,aes(x=reorder(County, m), y=m, fill=County)) + ggplot2::geom_bar(alpha=0.8,stat="identity") +
     ggplot2::xlab("") + ggplot2::ylab("Probability at risk") + ggplot2::ylim(0,1) + ggplot2::theme_bw() + ggplot2::theme(legend.position = "")
   return(p + ggplot2::coord_flip()+ggplot2::theme(axis.title.x = element_text(size=24),
                                 axis.text.x = element_text(size=24),
@@ -217,8 +217,8 @@ TimetrendCurve = function(stfit,ns,nt,countyname,vn=5,smooth.mode=TRUE){
   }
   dd = reshape::melt(df2,c("time"))
 
-  spd.plot <- ggplot2::ggplot(dd, aes(x=time,y=dd$value)) +
-    ggplot2::geom_line(aes(colour = dd$variable, group = dd$variable),linewidth=1.2)+
+  spd.plot <- ggplot2::ggplot(dd, aes(x=time,y=value)) +
+    ggplot2::geom_line(aes(colour = variable, group = variable),linewidth=1.2)+
     ggplot2::geom_line(aes(time,0),color="red",linewidth=1.2,lty=2) + ggplot2::ylab("") + ggplot2::xlab("") +
     ggplot2::theme(legend.position = "right",
           legend.title = element_blank(),

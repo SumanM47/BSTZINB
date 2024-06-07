@@ -7,7 +7,7 @@
 compute_NB_DIC(y,fit,lastit,nchain)
 }
 \arguments{
-\item{y}{vector of 0s and 1s or two categories (will be coerced to 0-1), the response used for fitting a BSTNB model}
+\item{y}{vector of counts, must be non-negative, the response used for fitting a BSTNB or BSTP model}
 
 \item{fit}{BSTNB or BSTP fitted object}
 

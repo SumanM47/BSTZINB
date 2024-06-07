@@ -7,7 +7,7 @@
 \format{
 \subsection{\code{USAcities}}{
 
-A dataframe with 3232 rows and 2 columns: state_id (State abbreviation) and county_name (County name).
+A dataframe with 3232 rows and 4 columns: state_id (State abbreviation), county_name (County name), county_fips (FIPS codes for the counties) and population (County population).
 }
 }
 \usage{

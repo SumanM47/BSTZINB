@@ -8,7 +8,7 @@ ResultTableSummary2(y,X,A,nt,
                            nchain=3,nsim=100,nburn=20,nthin=1)
 }
 \arguments{
-\item{y}{vector of 0s and 1s or two categories (will be coerced to 0-1)}
+\item{y}{vector of counts, must be non-negative}
 
 \item{X}{matrix of covariates, numeric}
 

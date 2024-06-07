@@ -7,7 +7,7 @@
 #' @usage BSTZINB(y,X,A,nt,LinearT = TRUE,
 #'             nchain=3,nsim=100,nburn=20,nthin=1)
 #'
-#' @param y vector of 0s and 1s or two categories (will be coerced to 0-1)
+#' @param y vector of counts, must be non-negative
 #' @param X matrix of covariates, numeric
 #' @param A adjacency matrix, numeric
 #' @param nt positive integer, number of time points
@@ -40,8 +40,8 @@ BSTZINB = function(y, X, A, nt, LinearT = TRUE, nchain=3, nsim=100, nburn=20, nt
   if(nsim < 1){stop("nsim must be a positive integer")}
   if(nburn < 0){stop("nburn must be a non-negative integer")}
   if(nthin < 1){stop("nthin must be a positive integer")}
-  if(sum(is.na(y))>0){naind <- which(is.na(y)); if(length(unique(y[-naind]))!=2)stop("y must have two categories")} else{if(length(unique(y))!=2)stop("y must have two categories")}
   y <- as.numeric(y)
+  if(min(y,na.rm=T)<0){stop("y must be non-negative")}
   if(!is.numeric(X)){stop("X must be numeric")}
   if(!is.numeric(A)){stop("A must be numeric")}
   if(!is.logical(LinearT)){stop("LinearT must be logical")}
@@ -169,7 +169,7 @@ BSTZINB = function(y, X, A, nt, LinearT = TRUE, nchain=3, nsim=100, nburn=20, nt
       # Update at-risk indicator y1 (W in paper)
       eta1<-Xtilde%*%alpha+Phi1+Phi2*t
       eta2<-Xtilde%*%beta+Phi3+Phi4*t              # Use all n observations
-      pi<-pmax(0.01,pmin(0.99,boot::inv.logit(eta1)))  # at-risk probability
+      pi<-pmax(0.01,pmin(0.99,inv.logit(eta1)))  # at-risk probability
       q<-pmax(0.01,pmin(0.99,1/(1+exp(eta2))))                      # Pr(y=0|y1=1)
       theta<-pi*(q^r)/(pi*(q^r)+1-pi)         # Conditional prob that y1=1 given y=0 -- i.e. Pr(chance zero|observed zero)
       y1[y==0]<-rbinom(N0,1,theta[y==0])      # If y=0, then draw a "chance zero" w.p. theta, otherwise y1=1

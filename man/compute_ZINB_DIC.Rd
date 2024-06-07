@@ -7,7 +7,7 @@
 compute_ZINB_DIC(y,fit,lastit,nchain)
 }
 \arguments{
-\item{y}{vector of 0s and 1s or two categories (will be coerced to 0-1), the response used for fitting a BSTZINB model}
+\item{y}{vector of counts, must be non-negative, the response used for fitting a BSTZINB model}
 
 \item{fit}{BSTZINB fitted object}
 

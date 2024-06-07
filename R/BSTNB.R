@@ -7,7 +7,7 @@
 #' @usage BSTNB(y,X,A,nt,
 #'             nchain=3,nsim=100,nburn=20,nthin=1)
 #'
-#' @param y vector of 0s and 1s or two categories (will be coerced to 0-1)
+#' @param y vector of counts, must be non-negative
 #' @param X matrix of covariates, numeric
 #' @param A adjacency matrix, numeric
 #' @param nt positive integer, number of time points
@@ -37,8 +37,8 @@ BSTNB = function(y, X, A, nt, nchain=3, nsim=100, nburn=20, nthin=1){
   if(nsim < 1){stop("nsim must be a positive integer")}
   if(nburn < 0){stop("nburn must be a non-negative integer")}
   if(nthin < 1){stop("nthin must be a positive integer")}
-  if(sum(is.na(y))>0){naind <- which(is.na(y)); if(length(unique(y[-naind]))!=2)stop("y must have two categories")} else{if(length(unique(y))!=2)stop("y must have two categories")}
   y <- as.numeric(y)
+  if(min(y,na.rm=T)<0){stop("y must be non-negative")}
   if(!is.numeric(X)){stop("X must be numeric")}
   if(!is.numeric(A)){stop("A must be numeric")}
 

@@ -21,12 +21,12 @@ get_adj_mat = function(county.adjacency,Countyvec,Statevec){
   if(prod(Countyvec %in% USAcities$county_name) != 1){"County names do not match"}
   if(prod(Statevec %in% USAcities$state_id) != 1){"State abbreviations do not match"}
 
-  county.names1 <- trimws(unlist(lapply(county.adjacency$Countyname, function(x) unlist(strsplit(as.character(x), ","))[1])))
-  county.names2 <- trimws(unlist(lapply(county.adjacency$neighborname, function(x) unlist(strsplit(as.character(x), ","))[1])))
-  state.abbs1 <- trimws(unlist(lapply(county.adjacency$Countyname,
-                                      function(x) tail(unlist(strsplit(as.character(x), ",")),n=1))))
-  state.abbs2 <- trimws(unlist(lapply(county.adjacency$neighborname,
-                                      function(x) tail(unlist(strsplit(as.character(x), ",")),n=1))))
+  county.names1 <- tolower(trimws(unlist(lapply(county.adjacency$Countyname, function(x) unlist(strsplit(as.character(x), ","))[1]))))
+  county.names2 <- tolower(trimws(unlist(lapply(county.adjacency$neighborname, function(x) unlist(strsplit(as.character(x), ","))[1]))))
+  state.abbs1 <- toupper(trimws(unlist(lapply(county.adjacency$Countyname,
+                                      function(x) tail(unlist(strsplit(as.character(x), ",")),n=1)))))
+  state.abbs2 <- toupper(trimws(unlist(lapply(county.adjacency$neighborname,
+                                      function(x) tail(unlist(strsplit(as.character(x), ",")),n=1)))))
 
   county.names1.full <- unlist(lapply(1:length(county.names1), function(x) paste(county.names1[x], state.abbs1[x], sep="-")))
   county.names2.full <- unlist(lapply(1:length(county.names2), function(x) paste(county.names2[x], state.abbs2[x], sep="-")))
@@ -88,7 +88,7 @@ ResultTableSummary = function(bstfit){
 #' @usage ResultTableSummary2(y,X,A,nt,
 #'                            nchain=3,nsim=100,nburn=20,nthin=1)
 #'
-#' @param y vector of 0s and 1s or two categories (will be coerced to 0-1)
+#' @param y vector of counts, must be non-negative
 #' @param X matrix of covariates, numeric
 #' @param A adjacency matrix, numeric
 #' @param nt positive integer, number of time points
@@ -122,8 +122,8 @@ ResultTableSummary2 = function(y, X, A, nt, nchain=3, nsim=100, nburn=20, nthin=
   if(nsim < 1){stop("nsim must be a positive integer")}
   if(nburn < 0){stop("nburn must be a non-negative integer")}
   if(nthin < 1){stop("nthin must be a positive integer")}
-  if(sum(is.na(y))>0){naind <- which(is.na(y)); if(length(unique(y[-naind]))!=2)stop("y must have two categories")} else{if(length(unique(y))!=2)stop("y must have two categories")}
   y <- as.numeric(y)
+  if(min(y,na.rm=T)<0){stop("y must be non-negative")}
   if(!is.numeric(X)){stop("X must be numeric")}
   if(!is.numeric(A)){stop("A must be numeric")}
 
@@ -226,7 +226,7 @@ ResultTableSummary2 = function(y, X, A, nt, nchain=3, nsim=100, nburn=20, nthin=
 #'
 #' @usage compute_ZINB_DIC(y,fit,lastit,nchain)
 #'
-#' @param y vector of 0s and 1s or two categories (will be coerced to 0-1), the response used for fitting a BSTZINB model
+#' @param y vector of counts, must be non-negative, the response used for fitting a BSTZINB model
 #' @param fit BSTZINB fitted object
 #' @param lastit positive integer, size of the chain used to fit BSTZINB
 #' @param nchain positive integer, number of chains used to fit BSTZINB
@@ -240,8 +240,8 @@ compute_ZINB_DIC = function(y,fit,lastit,nchain){
 
   if(is.null(y)){stop("y must be provided")}
   if(!is.vector(y)){stop("y must be a vector")}
-  if(sum(is.na(y))>0){naind <- which(is.na(y)); if(length(unique(y[-naind]))!=2)stop("y must have two categories")} else{if(length(unique(y))!=2)stop("y must have two categories")}
   y <- as.numeric(y)
+  if(min(y,na.rm=T)<0){stop("y must be non-negative")}
   if(is.null(fit$Eta1)){stop("fit must have a named component Eta1")}
   if(is.null(fit$Eta2)){stop("fit must have a named component Eta2")}
   if(is.null(fit$R)){stop("fit must have a named component R")}
@@ -294,7 +294,7 @@ compute_ZINB_DIC = function(y,fit,lastit,nchain){
 #'
 #' @usage compute_NB_DIC(y,fit,lastit,nchain)
 #'
-#' @param y vector of 0s and 1s or two categories (will be coerced to 0-1), the response used for fitting a BSTNB model
+#' @param y vector of counts, must be non-negative, the response used for fitting a BSTNB or BSTP model
 #' @param fit BSTNB or BSTP fitted object
 #' @param lastit positive integer, size of the chain used to fit BSTZINB
 #' @param nchain positive integer, number of chains used to fit BSTZINB
@@ -307,8 +307,8 @@ compute_NB_DIC = function(y,fit,lastit,nchain){
 
   if(is.null(y)){stop("y must be provided")}
   if(!is.vector(y)){stop("y must be a vector")}
-  if(sum(is.na(y))>0){naind <- which(is.na(y)); if(length(unique(y[-naind]))!=2)stop("y must have two categories")} else{if(length(unique(y))!=2)stop("y must have two categories")}
   y <- as.numeric(y)
+  if(min(y,na.rm=T)<0){stop("y must be non-negative")}
   if(is.null(fit$Eta1)){stop("fit must have a named component Eta1")}
   if(is.null(fit$R)){stop("fit must have a named component R")}
   if(!is.numeric(lastit) | lastit <= 0){stop("lastit must be a positive integer")}

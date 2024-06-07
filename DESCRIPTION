@@ -30,3 +30,7 @@ Imports:
     reshape,
     spam,
     viridis
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
