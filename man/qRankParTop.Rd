@@ -4,7 +4,8 @@
 \alias{qRankParTop}
 \title{Bar plot for time-averaged log-q estimates over top ranking counties (descending order)}
 \usage{
-qRankParTop(state.set,ns,nt,cname,stfit,vn=12)
+qRankParTop(state.set,ns,nt,cname,stfit,vn=12,
+                   cex.title=18, cex.lab=18, cex.legend=18)
 }
 \arguments{
 \item{state.set}{character vector of set of states on which the the graphics is to be made}
@@ -18,6 +19,12 @@ qRankParTop(state.set,ns,nt,cname,stfit,vn=12)
 \item{stfit}{the fitted data for BSTP, BSTNB or BSTZINB}
 
 \item{vn}{positive integer, number of sample counties to display}
+
+\item{cex.title}{Positive number to control the size of the text of the main title. Defaults to 18.}
+
+\item{cex.lab}{Positive number to control the size of the text in the axes labels. Defaults to 18.}
+
+\item{cex.legend}{Positive number to control the size of the text in the legend. Defaults to 18.}
 }
 \value{
 bar graph

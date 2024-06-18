@@ -4,7 +4,8 @@
 \alias{TimetrendCurve}
 \title{Time-trend curve over the study time domain for counties in the US}
 \usage{
-TimetrendCurve(stfit,ns,nt,countyname,vn=5,smooth.mode=TRUE)
+TimetrendCurve(stfit,ns,nt,countyname,vn=5,smooth.mode=TRUE,
+                     cex.title=18, cex.lab=18, cex.legend=18)
 }
 \arguments{
 \item{stfit}{fitted object from BSTP, BSTNB or BSTZINB}
@@ -18,6 +19,12 @@ TimetrendCurve(stfit,ns,nt,countyname,vn=5,smooth.mode=TRUE)
 \item{vn}{positive integer, number of sample counties to use}
 
 \item{smooth.mode}{logical, should splines be fitted to make it smooth}
+
+\item{cex.title}{Positive number to control the size of the text of the main title. Defaults to 18.}
+
+\item{cex.lab}{Positive number to control the size of the text in the axes labels. Defaults to 18.}
+
+\item{cex.legend}{Positive number to control the size of the text in the legend. Defaults to 18.}
 }
 \value{
 time-trend curves

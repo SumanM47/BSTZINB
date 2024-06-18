@@ -7,8 +7,8 @@
 #'
 #' @param state.sel character vector giving the selected states
 #' @param dat data frame having named components: y - the necessary quantity (numeric), sid - the region indices, tid - the time indices
-#' @param scol column index of the region to choose
-#' @param tcol (optional) column index of the time point to choose
+#' @param scol column index of the spatial regions
+#' @param tcol (optional) column index of the time points
 #' @param tsel (optional) selected time point
 #' @param cname character vector of county names, must match those in USAcities
 #' @param uplim (optional) numeric, upper limit for the given quantity
@@ -51,7 +51,7 @@ USDmapCount = function(state.sel,dat,scol,tcol=NULL,tsel=NULL,cname,uplim=NULL){
   sid = names(dat) %>% .[scol]
   tid = names(dat) %>% .[tcol]
   if(is.null(tsel)){
-    zinb.summary     = dat %>% dplyr::group_by(sid) %>% dplyr::summarise("cnt"=mean(dat$y))
+    zinb.summary     = dat %>% dplyr::group_by(sid) %>% dplyr::summarise("cnt"=mean(y))
   }else{
     zinb.summary     = dat %>% dplyr::group_by(sid) %>% dplyr::filter(tid==tsel)
     zinb.summary$cnt = zinb.summary$y
@@ -75,7 +75,8 @@ USDmapCount = function(state.sel,dat,scol,tcol=NULL,tsel=NULL,cname,uplim=NULL){
 #' @description
 #' Produce a descending order of bar plot for time-averaged log-q estimates over quantile-representative counties
 #'
-#' @usage qRankPar(state.set,ns,nt,cname,stfit,vn=12)
+#' @usage qRankPar(state.set,ns,nt,cname,stfit,vn=12,
+#'                cex.title=18, cex.lab=18, cex.legend=18)
 #'
 #' @param state.set character vector of set of states on which the the graphics is to be made
 #' @param ns positive integer, the number of counties
@@ -83,6 +84,9 @@ USDmapCount = function(state.sel,dat,scol,tcol=NULL,tsel=NULL,cname,uplim=NULL){
 #' @param cname character vector of the names of the counties
 #' @param stfit the fitted data for BSTP, BSTNB or BSTZINB
 #' @param vn positive integer, number of sample counties to display
+#' @param cex.title Positive number to control the size of the text of the main title. Defaults to 18.
+#' @param cex.lab Positive number to control the size of the text in the axes labels. Defaults to 18.
+#' @param cex.legend Positive number to control the size of the text in the legend. Defaults to 18.
 #'
 #' @import dplyr
 #' @import boot
@@ -93,7 +97,8 @@ USDmapCount = function(state.sel,dat,scol,tcol=NULL,tsel=NULL,cname,uplim=NULL){
 #'
 #' @return bar graph
 #' @export
-qRankPar = function(state.set,ns,nt,cname,stfit,vn=12){
+qRankPar = function(state.set,ns,nt,cname,stfit,vn=12,
+                    cex.title=18, cex.lab=18, cex.legend=18){
 
   if(!is.character(state.set)){stop("state.set must be character vector")}
   if(!is.numeric(ns)){stop("ns must be numeric")}
@@ -117,9 +122,10 @@ qRankPar = function(state.set,ns,nt,cname,stfit,vn=12){
   par(mfrow=c(1,1),mar=c(3,5,1,1))
   p <- ggplot2::ggplot(zinb.summary.sample,aes(x=reorder(County, m), y=m, fill=County)) + ggplot2::geom_bar(alpha=0.8,stat="identity") +
     ggplot2::xlab("") + ggplot2::ylab("Probability at risk") + ggplot2::ylim(0,1) + ggplot2::theme_bw() + ggplot2::theme(legend.position = "")
-  return(p + ggplot2::coord_flip()+ggplot2::theme(axis.title.x = element_text(size=24),
-                                axis.text.x = element_text(size=24),
-                                axis.text.y = element_text(size=24)))
+  return(p + ggplot2::coord_flip()+ggplot2::theme(axis.title.x = element_text(size=cex.title),
+                                axis.text.x = element_text(size=cex.lab),
+                                axis.text.y = element_text(size=cex.lab),
+                                legend.text = element_text(size=cex.legend)))
 }
 
 #' @title Bar plot for time-averaged log-q estimates over top ranking counties (descending order)
@@ -127,7 +133,8 @@ qRankPar = function(state.set,ns,nt,cname,stfit,vn=12){
 #' @description
 #' Produce a descending order of bar plot for time-averaged log-q estimates over top ranking counties
 #'
-#' @usage qRankParTop(state.set,ns,nt,cname,stfit,vn=12)
+#' @usage qRankParTop(state.set,ns,nt,cname,stfit,vn=12,
+#'                    cex.title=18, cex.lab=18, cex.legend=18)
 #'
 #' @param state.set character vector of set of states on which the the graphics is to be made
 #' @param ns positive integer, the number of counties
@@ -135,6 +142,9 @@ qRankPar = function(state.set,ns,nt,cname,stfit,vn=12){
 #' @param cname character vector of the names of the counties
 #' @param stfit the fitted data for BSTP, BSTNB or BSTZINB
 #' @param vn positive integer, number of sample counties to display
+#' @param cex.title Positive number to control the size of the text of the main title. Defaults to 18.
+#' @param cex.lab Positive number to control the size of the text in the axes labels. Defaults to 18.
+#' @param cex.legend Positive number to control the size of the text in the legend. Defaults to 18.
 #'
 #' @import dplyr
 #' @import BayesLogit
@@ -145,7 +155,8 @@ qRankPar = function(state.set,ns,nt,cname,stfit,vn=12){
 #'
 #' @return bar graph
 #' @export
-qRankParTop = function(state.set,ns,nt,cname,stfit,vn=12){
+qRankParTop = function(state.set,ns,nt,cname,stfit,vn=12,
+                       cex.title=18, cex.lab=18, cex.legend=18){
 
   if(!is.character(state.set)){stop("state.set must be character vector")}
   if(!is.numeric(ns)){stop("ns must be numeric")}
@@ -167,9 +178,10 @@ qRankParTop = function(state.set,ns,nt,cname,stfit,vn=12){
   par(mfrow=c(1,1),mar=c(3,5,1,1))
   p <- ggplot2::ggplot(zinb.summary.sample,aes(x=reorder(County, m), y=m, fill=County)) + ggplot2::geom_bar(alpha=0.8,stat="identity") +
     ggplot2::xlab("") + ggplot2::ylab("Probability at risk") + ggplot2::ylim(0,1) + ggplot2::theme_bw() + ggplot2::theme(legend.position = "")
-  return(p + ggplot2::coord_flip()+ggplot2::theme(axis.title.x = element_text(size=24),
-                                axis.text.x = element_text(size=24),
-                                axis.text.y = element_text(size=24)))
+  return(p + ggplot2::coord_flip()+ggplot2::theme(axis.title.x = element_text(size=cex.title),
+                                axis.text.x = element_text(size=cex.lab),
+                                axis.text.y = element_text(size=cex.lab),
+                                legend.text = element_text(size=cex.legend)))
 }
 
 #' @title Time-trend curve over the study time domain for counties in the US
@@ -177,7 +189,8 @@ qRankParTop = function(state.set,ns,nt,cname,stfit,vn=12){
 #' @description
 #' Produce a time-trend curve over the study time domain for counties in the US
 #'
-#' @usage TimetrendCurve(stfit,ns,nt,countyname,vn=5,smooth.mode=TRUE)
+#' @usage TimetrendCurve(stfit,ns,nt,countyname,vn=5,smooth.mode=TRUE,
+#'                      cex.title=18, cex.lab=18, cex.legend=18)
 #'
 #' @param stfit fitted object from BSTP, BSTNB or BSTZINB
 #' @param ns positive integer, the number of counties
@@ -185,6 +198,9 @@ qRankParTop = function(state.set,ns,nt,cname,stfit,vn=12){
 #' @param countyname character vector of county names to use
 #' @param vn positive integer, number of sample counties to use
 #' @param smooth.mode logical, should splines be fitted to make it smooth
+#' @param cex.title Positive number to control the size of the text of the main title. Defaults to 18.
+#' @param cex.lab Positive number to control the size of the text in the axes labels. Defaults to 18.
+#' @param cex.legend Positive number to control the size of the text in the legend. Defaults to 18.
 #'
 #' @import datasets
 #' @import ggplot2
@@ -195,7 +211,8 @@ qRankParTop = function(state.set,ns,nt,cname,stfit,vn=12){
 #'
 #' @return time-trend curves
 #' @export
-TimetrendCurve = function(stfit,ns,nt,countyname,vn=5,smooth.mode=TRUE){
+TimetrendCurve = function(stfit,ns,nt,countyname,vn=5,smooth.mode=TRUE,
+                          cex.title=18, cex.lab=18, cex.legend=18){
 
   if(!is.numeric(ns)){stop("ns must be numeric")}
   if(!is.numeric(nt)){stop("nt must be numeric")}
@@ -222,10 +239,10 @@ TimetrendCurve = function(stfit,ns,nt,countyname,vn=5,smooth.mode=TRUE){
     ggplot2::geom_line(aes(time,0),color="red",linewidth=1.2,lty=2) + ggplot2::ylab("") + ggplot2::xlab("") +
     ggplot2::theme(legend.position = "right",
           legend.title = element_blank(),
-          legend.text = element_text(size=20),
-          axis.text.x = element_text(size=20),
-          axis.text.y = element_text(size=20),
-          axis.title.x = element_text(size=20))
+          legend.text = element_text(size=cex.legend),
+          axis.text.x = element_text(size=cex.lab),
+          axis.text.y = element_text(size=cex.lab),
+          axis.title.x = element_text(size=cex.title))
 
   return(spd.plot)
 

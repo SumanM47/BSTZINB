@@ -11,9 +11,9 @@ USDmapCount(state.sel,dat,scol,tcol=NULL,tsel=NULL,cname,uplim=NULL)
 
 \item{dat}{data frame having named components: y - the necessary quantity (numeric), sid - the region indices, tid - the time indices}
 
-\item{scol}{column index of the region to choose}
+\item{scol}{column index of the spatial regions}
 
-\item{tcol}{(optional) column index of the time point to choose}
+\item{tcol}{(optional) column index of the time points}
 
 \item{tsel}{(optional) selected time point}
 

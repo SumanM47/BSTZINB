@@ -7,29 +7,30 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r, include = FALSE, warning=FALSE, message=FALSE}
 knitr::opts_chunk$set(
-  collapse = TRUE,
+  collapse = TRUE, warning = FALSE, message = FALSE,
+  fig.width=4, fig.height=4, fig.align='center', 
   comment = "#>"
 )
 ```
 
-Install the R package from GitHub using \texttt{devtools} package in R. If you do not have \texttt{devtools} installed in your system, please install \texttt{devtools} first. See [their website](https://cran.r-project.org/web/packages/devtools/readme/README.html) for details on installing \texttt{devtools}. Once you have devtools installed in your system, use the following in R to install the R package \texttt{BSTZINB} in your system:
+Install the R package from GitHub using `devtools` package in R. If you do not have `devtools` installed in your system, please install `devtools` first. See [their website](https://cran.r-project.org/web/packages/devtools/readme/README.html) for details on installing `devtools`. Once you have devtools installed in your system, use the following in R to install the R package `BSTZINB` in your system:
 
 ```{r, eval=FALSE}
 devtools::install_github("SumanM47/BSTZINB", force=TRUE)
 ```
 
-Load the R package using the \texttt{library()} function in R as below:
+Load the R package using the `library()` function in R as below:
 
 ```{r setup}
 library(BSTZINB)
 ```
 
 
-The functions available in the package can be readily used on real data. But in absence of that, we shall first create a synthetic dataset and use demonstrate the usage of the available functions on the said dataset here.
+The functions available in the package can be readily used on real data. But in absence of that, we shall first create a synthetic dataset and demonstrate the usage of the available functions on the said dataset here.
 
-Say, we want to apply our method to a presence-absence of disease data in the counties of Iowa. First, we need to create the adjacency matrix for the counties in Iowa. To do so, we shall use the datasets \texttt{county.adjacency} and \texttt{USAcities} provided in the package as below:
+Say, we want to apply our method to a presence-absence of disease data in the counties of Iowa. First, we need to create the adjacency matrix for the counties in Iowa. To do so, we shall use the datasets `county.adjacency` and `USAcities` provided in the package as below:
 
 ```{r}
 data(county.adjacency)
@@ -49,12 +50,12 @@ Next, we will set some parameters up:
 
 ```{r}
 set.seed(091017)
-n<-nrow(A)			    # Number of spatial units
-nis<-rep(24,n) 		# Number of individuals per county; here it's balanced -- 24 per county per year
+n<-nrow(A)			 # Number of spatial units
+nis<-rep(24,n) 	 # Number of individuals per county; here it's balanced -- 24 per county per year
 # Note: may need to lower proposal variance, s, below as n_i increases 
 sid<-rep(1:n,nis)
 tid<-rep(1:nis[1],n)
-N<-length(sid) 		  # Total number of observations
+N<-length(sid) 		# Total number of observations
 ```
 
 Next, we generate the spatial effects:
@@ -83,7 +84,7 @@ Phi4<-rep(phi4,nis)
 true.phi<-cbind(true.phi1,true.phi2,true.phi3,true.phi4)
 ```
 
-Followed by the fixed effects and the covariates \texttt{X}:
+Followed by the fixed effects and the covariates `X`:
 
 ```{r}
 library(boot)
@@ -106,28 +107,28 @@ true.alpha[1:2]<-c(-0.25,0.25)
 # true.alpha <- c(-0.25,0.25,-0.5,0.25)
 eta1<-Xtilde%*%true.alpha+Phi1+Phi2*t
 pii<-inv.logit(eta1)        # 1-pr("structural zero")
-u<-rbinom(N,1,pii)                  # at-risk indicator
+u<-rbinom(N,1,pii)          # at-risk indicator
 N1<-sum(u)          
-pstruct0<-1-mean(u)                # Proportion of structural zeros
+pstruct0<-1-mean(u)         # Proportion of structural zeros
 
 # Count Part 
 true.beta <- rep(0.1,p)
 true.beta[1:2]<-c(.5,-.25)
 tmp<-u
 tmp[u==0]<-0                       # If in structural group then set tmp to 0
-nis1<-tapply(tmp,sid,sum)           # Number of at risk observations in each county
+nis1<-tapply(tmp,sid,sum)          # Number of at risk observations in each county
 
 eta2<-Xtilde[u==1,]%*%true.beta+Phi3[u==1]+Phi4[u==1]*t[u==1] # Linear predictor for count part
-true.r<-1.25                               # NB dispersion 
+true.r<-1.25                       # NB dispersion 
 psi<-exp(eta2)/(1+exp(eta2))       # Prob of success
-mu<-true.r*psi/(1-psi)                  # NB mean
+mu<-true.r*psi/(1-psi)             # NB mean
 ```
 
-Finally, we generate the data \texttt{y} and make it into a data frame.
+Finally, we generate the data `y` and make it into a data frame.
 ```{r}
-y<-rep(0,N)                        # Response
-y[u==1]<-rnbinom(N1,size=true.r,mu=mu)       # If at risk, draw from NB
-pzero<-length(y[y==0])/N           # Proportion of zeros
+y<-rep(0,N)                           # Response
+y[u==1]<-rnbinom(N1,size=true.r,mu=mu)# If at risk, draw from NB
+pzero<-length(y[y==0])/N             # Proportion of zeros
 # pzero
 # pstruct0/pzero
 # table(y)
@@ -143,7 +144,7 @@ tbl_summary(this_dat) %>% modify_header(label = "**Coefficients**")
 
 Once we have generated the data, we shall now use the functions available in our package on this data.
 
-First, we'll focus on summarizing and visualizing the data by producing spatial maps and other plots and summaries of the data. The following code generates a spatial map of cumulative deaths in the USA:
+First, we'll focus on summarizing and visualizing the data by producing spatial maps and other plots and summaries of the data. The following code generates a spatial map of cumulative deaths in the state of Iowa:
 
 ```{r}
 USDmapCount(state.sel = c("IA"),
@@ -177,7 +178,7 @@ this_dat2 %>% apply(2,function(w) Moran.I(w,A)) %>% lapply(function(list) list$p
 Moran.I(rowMeans(this_dat2),A)
 ```
 
-We can visualize the death count at given times by using the \texttt{tsel} option:
+We can visualize the death count at given times by using the `tsel` option:
 
 ```{r}
 USDmapCount(state.sel = c("IA"),
@@ -206,23 +207,23 @@ USDmapCount(state.sel = c("IA"),
 ```
 
 
-Now, we shall apply the different models on this data. We'll start by fitting the Bayesian Spatiotemporal Poisson (BSTP) model using the function \texttt{BSTP}:
+Now, we shall apply the different models on this data. We'll start by fitting the Bayesian Spatiotemporal Poisson (BSTP) model using the function `BSTP`:
 
 ```{r}
 res1 = BSTP(y, X, A, nt=24, nchain=3, nsim=100, nburn=50)
 glimpse(res1)
 ```
 
-Next will be the Bayesian Spatiotemporal Negative Binomial (BSTNB) model using the function \texttt{BSTNB}:
+Next will be the Bayesian Spatiotemporal Negative Binomial (BSTNB) model using the function `BSTNB`:
 
 ```{r}
 res2 = BSTNB(y, X, A, nt=24, nchain=3, nsim=100, nburn=50)
 glimpse(res2)
 ```
 
-Followed by a Bayesian Spatiotemporal Zero Inflated Negative Binomal (BSTZINB) model with linear temporal trend usiong the \texttt{BSTZINB} function with option \texttt{LinearT} seta to \texttt{TRUE}. We can check for the convergences for different parameters for this model using the \texttt{conv.test} function supplied with the package. DIC can also be computed using the supplied \texttt{compute_ZINB_DIC} function.
+Followed by a Bayesian Spatiotemporal Zero Inflated Negative Binomial (BSTZINB) model with linear temporal trend using the `BSTZINB` function with option `LinearT` set to `TRUE`. We can check the convergence of different parameters for this model using the `conv.test` function supplied with the package. DIC can also be computed using the supplied `compute_ZINB_DIC` function.
 
-```{r}
+```{r,fig.width=6,fig.height=3,fig.align='center'}
 res3 = BSTZINB(y, X, A, nt=24, LinearT=TRUE, nchain=3, nsim=100, nburn=50, nthin=1)
 glimpse(res3)
 
@@ -244,9 +245,9 @@ compute_ZINB_DIC(y,res3,dim(res3$Beta)[1],3)
 ```
 
 
-And, another BSTZINB model but with spline fitted non-linear temporal trend is fitted below by switching the \texttt{LinearT} to \texttt{FALSE}. Corresponding convergence tests, plots and DIC computation is also presented. We can compare the two DICs to pick the best fit model.
+And, another BSTZINB model but with spline fitted non-linear temporal trend is fitted below by switching the `LinearT` to `FALSE`. Corresponding convergence tests, plots and DIC computation are also presented. We can compare the two DICs to pick the best fit model.
 
-```{r}
+```{r,fig.width=6,fig.height=3,fig.align='center'}
 res4 = BSTZINB(y, X, A, nt=24, LinearT=FALSE, nchain=3, nsim=100, nburn=50)
 glimpse(res4)
 
@@ -266,13 +267,13 @@ mean(res4$R)
 compute_ZINB_DIC(y,res4,dim(res4$Beta)[1],3)
 ```
 
-These results may be summarized using the supplied \texttt{ResultTableSummary} function. Here we summarize the output of the BSTZINB model with linear time trend:
+These results may be summarized using the supplied `ResultTableSummary` function. Here we summarize the output of the BSTZINB model with the linear time trend:
 
 ```{r}
 ResultTableSummary(res3)
 ```
 
-A more detailed summary can be obtained by using the function \texttt{ResultTableSummary2}. This functions takes the data (\texttt{y}, \texttt{X}, \texttt{A}, \texttt{nt}) as input, runs all of the above 4 models, computes DICs and checks convergences, and finally summarizes them:
+A more detailed summary can be obtained by using the function `ResultTableSummary2`. This functions takes the data (`y`, `X`, `A`, `nt`) as input, runs all of the above 4 models, computes DICs and checks convergences, and finally summarizes them:
 
 ```{r}
 ResultTableSummary2(y, X, A, nt=24, nchain=3, nsim=100, nburn=50, nthin=1)
@@ -344,22 +345,26 @@ USDmapCount(state.sel = c("IA"),
             cname = countyname)
 ```
 
-Further summarization of the output can be done by plotting the probabilities top few counties by quantiles and by numbers using \texttt{qRankPar} and \texttt{qRankParTop} functions:
+Further summarization of the output can be done by plotting the probabilities of the top few counties by quantiles and by numbers using `qRankPar` and `qRankParTop` functions:
 ```{r}
 # Bar Plot of vn-quantile Probability at Risk of disease
-qRankPar(state.set=c("IA"),ns=nrow(A),nt=24,cname=countyname,stfit=res3,vn=12)
+qRankPar(state.set=c("IA"),ns=nrow(A),nt=24,cname=countyname,stfit=res3,vn=12,
+         cex.title=18, cex.lab=12, cex.legend=12)
 
 # Bar Plot of Top vn number of Probability at Risk of disease
-qRankParTop(state.set=c("IA"),ns=nrow(A),nt=24,cname=countyname,stfit=res3,vn=12)
+qRankParTop(state.set=c("IA"),ns=nrow(A),nt=24,cname=countyname,stfit=res3,vn=12,
+            cex.title=18, cex.lab=12, cex.legend=12)
 ```
 
-The non-linear time effect for abundance for BSTZINB outputs (non-smoothed and smoothed versions) can be plotted using the \texttt{TimetrendCurve} function:
+The non-linear time effect for abundance for BSTZINB outputs (non-smoothed and smoothed versions) can be plotted using the `TimetrendCurve` function:
 
 ```{r}
 # Line Plot of Nonlinear Time effect abundance
-TimetrendCurve(res4,ncol(A),nt=24,countyname,vn=3,smooth.mode=FALSE)
+TimetrendCurve(res4,ncol(A),nt=24,countyname,vn=3,smooth.mode=FALSE,
+               cex.title=18, cex.lab=12, cex.legend=12)
 
 # Line Plot of Nonlinear Time effect abundance (smoothed version)
-TimetrendCurve(res3,ncol(A),nt=24,countyname,vn=5,smooth.mode=TRUE)
+TimetrendCurve(res3,ncol(A),nt=24,countyname,vn=5,smooth.mode=TRUE,
+               cex.title=18, cex.lab=12, cex.legend=12)
 ```
 
