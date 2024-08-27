@@ -4,15 +4,14 @@
 #' @description
 #' Generate posterior samples for the parameters in a Bayesian Spatiotemporal Negative Binomial Model
 #'
-#' @usage BSTNB(y,X,A,nt,
-#'             nchain=3,nsim=100,nburn=20,nthin=1)
+#' @usage BSTNB(y,X,A,
+#'             nchain=3,niter=100,nburn=20,nthin=1)
 #'
 #' @param y vector of counts, must be non-negative
 #' @param X matrix of covariates, numeric
 #' @param A adjacency matrix, numeric
-#' @param nt positive integer, number of time points
 #' @param nchain positive integer, number of MCMC chains to be run
-#' @param nsim positive integer, number of iterations in each chain
+#' @param niter positive integer, number of iterations in each chain
 #' @param nburn non-negative integer, number of iterations to be discarded as burn-in samples
 #' @param nthin positive integer, thinning interval
 #'
@@ -26,15 +25,14 @@
 #'
 #' @return list of posterior samples of the parameters of the model
 #' @export
-BSTNB = function(y, X, A, nt, nchain=3, nsim=100, nburn=20, nthin=1){
+BSTNB = function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
 
   ## Run the necessary checks
   if(!is.vector(y)){stop("y must be a vector")}
   if(!is.matrix(X)){stop("X must be a matrix")}
   if(!is.matrix(A)){stop("A must be a matrix")}
-  if(nt <= 0){stop("nt must be positive integer")}
   if(nchain < 1){stop("nchain must be a positive integer")}
-  if(nsim < 1){stop("nsim must be a positive integer")}
+  if(niter < 1){stop("nsim must be a positive integer")}
   if(nburn < 0){stop("nburn must be a non-negative integer")}
   if(nthin < 1){stop("nthin must be a positive integer")}
   y <- as.numeric(y)
@@ -42,7 +40,9 @@ BSTNB = function(y, X, A, nt, nchain=3, nsim=100, nburn=20, nthin=1){
   if(!is.numeric(X)){stop("X must be numeric")}
   if(!is.numeric(A)){stop("A must be numeric")}
 
-  n<-nrow(A)			    # Number of spatial units
+  N = length(y)
+  n <- nrow(A)			    # Number of spatial units
+  nt <- N/n
   nis<-rep(nt,n) 		# Number of individuals per county; here it's balanced -- 50 per county per year
   # Note: may need to lower proposal variance, s, below as n_i increases
   sid<-rep(1:n,nis)
@@ -64,7 +64,7 @@ BSTNB = function(y, X, A, nt, nchain=3, nsim=100, nburn=20, nthin=1){
   ############
   # Num Sims #
   ############
-  lastit<-(nsim-nburn)/nthin	# Last stored value
+  lastit<-(niter-nburn)/nthin	# Last stored value
 
   ############
   # Store #
@@ -103,7 +103,7 @@ BSTNB = function(y, X, A, nt, nchain=3, nsim=100, nburn=20, nthin=1){
     # MCMC #
     ########
 
-    for (i in 1:nsim){
+    for (i in 1:niter){
 
       # Update r
       rnew<-rtnorm(1,r,sqrt(s),lower=0)       # Treat r as continuous
@@ -177,11 +177,11 @@ BSTNB = function(y, X, A, nt, nchain=3, nsim=100, nburn=20, nthin=1){
       }
 
       # if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/nsim*100,2),"% completed"))
-      if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/nsim*100,2),"% completed |","Test:",conv.test(R[,chain])))
+      if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/niter*100,2),"% completed |","Test:",conv.test(R[,chain])))
 
     }
   }
 
-  list.params = list(Beta=Beta, R=R, Sigphi=Sigphi, PHI3=PHI3, PHI4=PHI4, Eta1=Eta)
+  list.params = list(Alpha=NULL, Beta=Beta, R=R, Sigphi=Sigphi, PHI3=PHI3, PHI4=PHI4, Eta1=Eta)
   return(list.params)
 }

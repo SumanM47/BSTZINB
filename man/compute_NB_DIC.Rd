@@ -4,12 +4,12 @@
 \alias{compute_NB_DIC}
 \title{DIC for BSTNB or BSTP fitted objects}
 \usage{
-compute_NB_DIC(y,fit,lastit,nchain)
+compute_NB_DIC(y,bstfit,lastit,nchain)
 }
 \arguments{
 \item{y}{vector of counts, must be non-negative, the response used for fitting a BSTNB or BSTP model}
 
-\item{fit}{BSTNB or BSTP fitted object}
+\item{bstfit}{BSTNB or BSTP fitted object}
 
 \item{lastit}{positive integer, size of the chain used to fit BSTZINB}
 

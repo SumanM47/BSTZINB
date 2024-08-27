@@ -24,7 +24,7 @@
 #' @import matrixcalc
 #'
 #' @return list of posterior samples of the parameters of the model
-#' @export
+#' @noRd
 BSTP = function(y, X, A, nt, nchain=3, nsim=100, nburn=20, nthin=1){
 
   ## Run the necessary checks

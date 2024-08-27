@@ -4,8 +4,8 @@
 \alias{BSTNB}
 \title{Fit a Bayesian Spatiotemporal Negative Binomial model}
 \usage{
-BSTNB(y,X,A,nt,
-            nchain=3,nsim=100,nburn=20,nthin=1)
+BSTNB(y,X,A,
+            nchain=3,niter=100,nburn=20,nthin=1)
 }
 \arguments{
 \item{y}{vector of counts, must be non-negative}
@@ -14,11 +14,9 @@ BSTNB(y,X,A,nt,
 
 \item{A}{adjacency matrix, numeric}
 
-\item{nt}{positive integer, number of time points}
-
 \item{nchain}{positive integer, number of MCMC chains to be run}
 
-\item{nsim}{positive integer, number of iterations in each chain}
+\item{niter}{positive integer, number of iterations in each chain}
 
 \item{nburn}{non-negative integer, number of iterations to be discarded as burn-in samples}
 

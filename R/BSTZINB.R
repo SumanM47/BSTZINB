@@ -4,16 +4,15 @@
 #' @description
 #' Generate posterior samples for the parameters in a Bayesian Spatiotemporal Zero Inflated Negative Binomial Model
 #'
-#' @usage BSTZINB(y,X,A,nt,LinearT = TRUE,
-#'             nchain=3,nsim=100,nburn=20,nthin=1)
+#' @usage BSTZINB(y,X,A,LinearT = TRUE,
+#'             nchain=3,niter=100,nburn=20,nthin=1)
 #'
 #' @param y vector of counts, must be non-negative
 #' @param X matrix of covariates, numeric
 #' @param A adjacency matrix, numeric
-#' @param nt positive integer, number of time points
 #' @param LinearT logical, whether to fit a linear or non-linear temporal trend
 #' @param nchain positive integer, number of MCMC chains to be run
-#' @param nsim positive integer, number of iterations in each chain
+#' @param niter positive integer, number of iterations in each chain
 #' @param nburn non-negative integer, number of iterations to be discarded as burn-in samples
 #' @param nthin positive integer, thinning interval
 #'
@@ -29,15 +28,14 @@
 #'
 #' @return list of posterior samples of the parameters of the model
 #' @export
-BSTZINB = function(y, X, A, nt, LinearT = TRUE, nchain=3, nsim=100, nburn=20, nthin=1){
+BSTZINB = function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthin=1){
 
   ## Run the necessary checks
   if(!is.vector(y)){stop("y must be a vector")}
   if(!is.matrix(X)){stop("X must be a matrix")}
   if(!is.matrix(A)){stop("A must be a matrix")}
-  if(nt <= 0){stop("nt must be positive integer")}
   if(nchain < 1){stop("nchain must be a positive integer")}
-  if(nsim < 1){stop("nsim must be a positive integer")}
+  if(niter < 1){stop("niter must be a positive integer")}
   if(nburn < 0){stop("nburn must be a non-negative integer")}
   if(nthin < 1){stop("nthin must be a positive integer")}
   y <- as.numeric(y)
@@ -76,7 +74,7 @@ BSTZINB = function(y, X, A, nt, LinearT = TRUE, nchain=3, nsim=100, nburn=20, nt
   ############
   # Num Sims #
   ############
-  lastit<-(nsim-nburn)/nthin	# Last stored value
+  lastit<-(niter-nburn)/nthin	# Last stored value
 
   ############
   # Store #
@@ -124,7 +122,7 @@ BSTZINB = function(y, X, A, nt, LinearT = TRUE, nchain=3, nsim=100, nburn=20, nt
     # MCMC #
     ########
 
-    for (i in 1:nsim){
+    for (i in 1:niter){
 
       # Update alpha
       mu<-Xtilde%*%alpha+Phi1+Phi2*t
@@ -169,9 +167,9 @@ BSTZINB = function(y, X, A, nt, LinearT = TRUE, nchain=3, nsim=100, nburn=20, nt
       # Update at-risk indicator y1 (W in paper)
       eta1<-Xtilde%*%alpha+Phi1+Phi2*t
       eta2<-Xtilde%*%beta+Phi3+Phi4*t              # Use all n observations
-      pi<-pmax(0.01,pmin(0.99,inv.logit(eta1)))  # at-risk probability
+      pii<-pmax(0.01,pmin(0.99,inv.logit(eta1)))  # at-risk probability
       q<-pmax(0.01,pmin(0.99,1/(1+exp(eta2))))                      # Pr(y=0|y1=1)
-      theta<-pi*(q^r)/(pi*(q^r)+1-pi)         # Conditional prob that y1=1 given y=0 -- i.e. Pr(chance zero|observed zero)
+      theta<-pii*(q^r)/(pii*(q^r)+1-pii)         # Conditional prob that y1=1 given y=0 -- i.e. Pr(chance zero|observed zero)
       y1[y==0]<-rbinom(N0,1,theta[y==0])      # If y=0, then draw a "chance zero" w.p. theta, otherwise y1=1
       N1<-sum(y1)
       nis1<-tapply(y1,sid,sum)
@@ -248,7 +246,7 @@ BSTZINB = function(y, X, A, nt, LinearT = TRUE, nchain=3, nsim=100, nburn=20, nt
       }
 
       # if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/nsim*100,2),"% completed"))
-      if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/nsim*100,2),"% completed |","Test:",conv.test(R[,chain])))
+      if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/niter*100,2),"% completed |","Test:",conv.test(R[,chain])))
 
     }
   }

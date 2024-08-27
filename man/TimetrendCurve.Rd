@@ -4,17 +4,13 @@
 \alias{TimetrendCurve}
 \title{Time-trend curve over the study time domain for counties in the US}
 \usage{
-TimetrendCurve(stfit,ns,nt,countyname,vn=5,smooth.mode=TRUE,
+TimetrendCurve(bstfit,cname,vn=5,smooth.mode=TRUE,
                      cex.title=18, cex.lab=18, cex.legend=18)
 }
 \arguments{
-\item{stfit}{fitted object from BSTP, BSTNB or BSTZINB}
+\item{bstfit}{fitted object from BSTP, BSTNB or BSTZINB}
 
-\item{ns}{positive integer, the number of counties}
-
-\item{nt}{positive integer, the number of timepoints}
-
-\item{countyname}{character vector of county names to use}
+\item{cname}{character vector of county names to use}
 
 \item{vn}{positive integer, number of sample counties to use}
 

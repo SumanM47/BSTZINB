@@ -75,14 +75,12 @@ USDmapCount = function(state.sel,dat,scol,tcol=NULL,tsel=NULL,cname,uplim=NULL){
 #' @description
 #' Produce a descending order of bar plot for time-averaged log-q estimates over quantile-representative counties
 #'
-#' @usage qRankPar(state.set,ns,nt,cname,stfit,vn=12,
+#' @usage qRankPar(state.set,cname,bstfit,vn=12,
 #'                cex.title=18, cex.lab=18, cex.legend=18)
 #'
 #' @param state.set character vector of set of states on which the the graphics is to be made
-#' @param ns positive integer, the number of counties
-#' @param nt positive integer, the number of timepoints
 #' @param cname character vector of the names of the counties
-#' @param stfit the fitted data for BSTP, BSTNB or BSTZINB
+#' @param bstfit the fitted data for BSTP, BSTNB or BSTZINB
 #' @param vn positive integer, number of sample counties to display
 #' @param cex.title Positive number to control the size of the text of the main title. Defaults to 18.
 #' @param cex.lab Positive number to control the size of the text in the axes labels. Defaults to 18.
@@ -97,14 +95,13 @@ USDmapCount = function(state.sel,dat,scol,tcol=NULL,tsel=NULL,cname,uplim=NULL){
 #'
 #' @return bar graph
 #' @export
-qRankPar = function(state.set,ns,nt,cname,stfit,vn=12,
+qRankPar = function(state.set,cname,bstfit,vn=12,
                     cex.title=18, cex.lab=18, cex.legend=18){
 
   if(!is.character(state.set)){stop("state.set must be character vector")}
-  if(!is.numeric(ns)){stop("ns must be numeric")}
-  if(!is.numeric(nt)){stop("nt must be numeric")}
   if(!is.character(cname)){stop("cname must be character vector")}
-  if(is.null(stfit$Eta1)){stop("stfit must have an entry named Eta1")}
+  if(is.null(bstfit$Eta1)){stop("stfit must have an entry named Eta1")}
+  if(is.null(bstfit$PHI1)){stop("stfit must have an entry named PHI1")}
   if(!is.numeric(vn)){stop("vn must be a positive integer")}
   if(vn <= 0){stop("vn must be a positive integer")}
   if(prod(toupper(state.set) %in% datasets::state.abb) != 1){stop("State abbreviation does not match")}
@@ -112,8 +109,9 @@ qRankPar = function(state.set,ns,nt,cname,stfit,vn=12,
   if(prod(toupper(cname) %in% toupper(USAcities$county_name)) != 1){stop("County names do not match")}
 
 
+  ns <- dim(bstfit$PHI1)[2]
 
-  qij.mat <- matrix(boot::inv.logit(apply(stfit$Eta1,2,mean)),nrow=ns)
+  qij.mat <- matrix(boot::inv.logit(apply(bstfit$Eta1,2,mean)),nrow=ns)
   zinb.summary <- data.frame("County"=cname, "m" = rowMeans(qij.mat))
   zinb.summary <- zinb.summary[order(zinb.summary$m),]
   zinb.summary$County = factor(zinb.summary$County)
@@ -133,14 +131,12 @@ qRankPar = function(state.set,ns,nt,cname,stfit,vn=12,
 #' @description
 #' Produce a descending order of bar plot for time-averaged log-q estimates over top ranking counties
 #'
-#' @usage qRankParTop(state.set,ns,nt,cname,stfit,vn=12,
+#' @usage qRankParTop(state.set,cname,bstfit,vn=12,
 #'                    cex.title=18, cex.lab=18, cex.legend=18)
 #'
 #' @param state.set character vector of set of states on which the the graphics is to be made
-#' @param ns positive integer, the number of counties
-#' @param nt positive integer, the number of timepoints
 #' @param cname character vector of the names of the counties
-#' @param stfit the fitted data for BSTP, BSTNB or BSTZINB
+#' @param bstfit the fitted data for BSTP, BSTNB or BSTZINB
 #' @param vn positive integer, number of sample counties to display
 #' @param cex.title Positive number to control the size of the text of the main title. Defaults to 18.
 #' @param cex.lab Positive number to control the size of the text in the axes labels. Defaults to 18.
@@ -155,29 +151,35 @@ qRankPar = function(state.set,ns,nt,cname,stfit,vn=12,
 #'
 #' @return bar graph
 #' @export
-qRankParTop = function(state.set,ns,nt,cname,stfit,vn=12,
+qRankParTop = function(state.set,cname,bstfit,vn=12,
                        cex.title=18, cex.lab=18, cex.legend=18){
 
   if(!is.character(state.set)){stop("state.set must be character vector")}
-  if(!is.numeric(ns)){stop("ns must be numeric")}
-  if(!is.numeric(nt)){stop("nt must be numeric")}
   if(!is.character(cname)){stop("cname must be character vector")}
-  if(is.null(stfit$Eta1)){stop("stfit must have an entry named Eta1")}
+  if(is.null(bstfit$Eta1)){stop("stfit must have an entry named Eta1")}
+  if(is.null(bstfit$PHI1)){stop("stfit must have an entry named PHI1")}
   if(!is.numeric(vn)){stop("vn must be a positive integer")}
   if(vn <= 0){stop("vn must be a positive integer")}
   if(prod(toupper(state.set) %in% datasets::state.abb) != 1){stop("State abbreviation does not match")}
   USAcities <- BSTZINB::USAcities
   if(prod(toupper(cname) %in% toupper(USAcities$county_name)) != 1){stop("County names do not match")}
 
-  qij.mat <- matrix(boot::inv.logit(apply(stfit$Eta1,2,mean)),nrow=ns)
+  ns <- dim(bstfit$PHI1)[2]
+
+  qij.mat <- matrix(boot::inv.logit(apply(bstfit$Eta1,2,mean)),nrow=ns)
   zinb.summary <- data.frame("County"=cname, "m" = rowMeans(qij.mat))
   zinb.summary <- zinb.summary[order(zinb.summary$m,decreasing = TRUE),]
   zinb.summary$County = factor(zinb.summary$County)
   zinb.summary.sample = zinb.summary[c(1:vn),]
 
   par(mfrow=c(1,1),mar=c(3,5,1,1))
-  p <- ggplot2::ggplot(zinb.summary.sample,aes(x=reorder(County, m), y=m, fill=County)) + ggplot2::geom_bar(alpha=0.8,stat="identity") +
-    ggplot2::xlab("") + ggplot2::ylab("Probability at risk") + ggplot2::ylim(0,1) + ggplot2::theme_bw() + ggplot2::theme(legend.position = "")
+  p <- ggplot2::ggplot(zinb.summary.sample,aes(x=reorder(County, m), y=m, fill=County)) +
+    ggplot2::geom_bar(alpha=0.8,stat="identity") +
+    ggplot2::xlab("") +
+    ggplot2::ylab("Probability at risk") +
+    ggplot2::ylim(0,1) + ggplot2::theme_bw() +
+    ggplot2::theme(legend.position = "")
+
   return(p + ggplot2::coord_flip()+ggplot2::theme(axis.title.x = element_text(size=cex.title),
                                 axis.text.x = element_text(size=cex.lab),
                                 axis.text.y = element_text(size=cex.lab),
@@ -189,13 +191,11 @@ qRankParTop = function(state.set,ns,nt,cname,stfit,vn=12,
 #' @description
 #' Produce a time-trend curve over the study time domain for counties in the US
 #'
-#' @usage TimetrendCurve(stfit,ns,nt,countyname,vn=5,smooth.mode=TRUE,
+#' @usage TimetrendCurve(bstfit,cname,vn=5,smooth.mode=TRUE,
 #'                      cex.title=18, cex.lab=18, cex.legend=18)
 #'
-#' @param stfit fitted object from BSTP, BSTNB or BSTZINB
-#' @param ns positive integer, the number of counties
-#' @param nt positive integer, the number of timepoints
-#' @param countyname character vector of county names to use
+#' @param bstfit fitted object from BSTP, BSTNB or BSTZINB
+#' @param cname character vector of county names to use
 #' @param vn positive integer, number of sample counties to use
 #' @param smooth.mode logical, should splines be fitted to make it smooth
 #' @param cex.title Positive number to control the size of the text of the main title. Defaults to 18.
@@ -211,22 +211,23 @@ qRankParTop = function(state.set,ns,nt,cname,stfit,vn=12,
 #'
 #' @return time-trend curves
 #' @export
-TimetrendCurve = function(stfit,ns,nt,countyname,vn=5,smooth.mode=TRUE,
+TimetrendCurve = function(bstfit,cname,vn=5,smooth.mode=TRUE,
                           cex.title=18, cex.lab=18, cex.legend=18){
 
-  if(!is.numeric(ns)){stop("ns must be numeric")}
-  if(!is.numeric(nt)){stop("nt must be numeric")}
-  if(!is.character(countyname)){stop("countyname must be character vector")}
-  if(is.null(stfit$Eta1)){stop("stfit must have an entry named Eta1")}
+  if(!is.character(cname)){stop("cname must be character vector")}
+  if(is.null(bstfit$Eta1)){stop("stfit must have an entry named Eta1")}
+  if(is.null(bstfit$PHI1)){stop("stfit must have an entry named PHI1")}
   if(!is.numeric(vn)){stop("vn must be a positive integer")}
   if(vn <= 0){stop("vn must be a positive integer")}
   if(!is.logical(smooth.mode)){stop("smooth.mode must be TRUE/FALSE")}
   USAcities <- BSTZINB::USAcities
-  if(prod(toupper(countyname) %in% toupper(USAcities$county_name)) != 1){stop("County names do not match")}
+  if(prod(toupper(cname) %in% toupper(USAcities$county_name)) != 1){stop("County names do not match")}
 
+  ns <- dim(bstfit$PHI1)[2]
+  nt <- dim(bstfit$Eta1)[2]/ns
 
   time = c(1:nt)
-  df   = data.frame(matrix(apply(stfit$Eta1,2,mean),nrow=ns)); rownames(df) <- factor(countyname)
+  df   = data.frame(matrix(apply(bstfit$Eta1,2,mean),nrow=ns)); rownames(df) <- factor(cname)
   df2 = data.frame(time,t(df[seq(1,ns,length.out=vn),]))
   if(smooth.mode){
     time = spline(df2[,1],df2[,2])$x

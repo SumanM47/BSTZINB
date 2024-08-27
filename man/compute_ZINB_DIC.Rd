@@ -4,12 +4,12 @@
 \alias{compute_ZINB_DIC}
 \title{DIC for BSTZINB fitted objects}
 \usage{
-compute_ZINB_DIC(y,fit,lastit,nchain)
+compute_ZINB_DIC(y,bstfit,lastit,nchain)
 }
 \arguments{
 \item{y}{vector of counts, must be non-negative, the response used for fitting a BSTZINB model}
 
-\item{fit}{BSTZINB fitted object}
+\item{bstfit}{BSTZINB fitted object}
 
 \item{lastit}{positive integer, size of the chain used to fit BSTZINB}
 

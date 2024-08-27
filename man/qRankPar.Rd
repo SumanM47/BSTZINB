@@ -4,19 +4,15 @@
 \alias{qRankPar}
 \title{Bar plot for time-averaged log-q estimates over quantile-representative counties (descending order)}
 \usage{
-qRankPar(state.set,ns,nt,cname,stfit,vn=12,
+qRankPar(state.set,cname,bstfit,vn=12,
                cex.title=18, cex.lab=18, cex.legend=18)
 }
 \arguments{
 \item{state.set}{character vector of set of states on which the the graphics is to be made}
 
-\item{ns}{positive integer, the number of counties}
-
-\item{nt}{positive integer, the number of timepoints}
-
 \item{cname}{character vector of the names of the counties}
 
-\item{stfit}{the fitted data for BSTP, BSTNB or BSTZINB}
+\item{bstfit}{the fitted data for BSTP, BSTNB or BSTZINB}
 
 \item{vn}{positive integer, number of sample counties to display}
 
