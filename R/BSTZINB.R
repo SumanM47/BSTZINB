@@ -4,12 +4,13 @@
 #' @description
 #' Generate posterior samples for the parameters in a Bayesian Spatiotemporal Zero Inflated Negative Binomial Model
 #'
-#' @usage BSTZINB(y,X,A,LinearT = TRUE,
-#'             nchain=3,niter=100,nburn=20,nthin=1)
+#' @usage BSTZINB(y,Xtilde,A,oind=NULL,LinearT = TRUE,
+#'             nchain=3,niter=1000,nburn=500,nthin=1)
 #'
 #' @param y vector of counts, must be non-negative
-#' @param X matrix of covariates, numeric
+#' @param Xtilde matrix of offset and covariates, numeric
 #' @param A adjacency matrix, numeric
+#' @param oind indices of offset
 #' @param LinearT logical, whether to fit a linear or non-linear temporal trend
 #' @param nchain positive integer, number of MCMC chains to be run
 #' @param niter positive integer, number of iterations in each chain
@@ -28,21 +29,7 @@
 #'
 #' @return list of posterior samples of the parameters of the model
 #' @export
-BSTZINB = function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthin=1){
-
-  ## Run the necessary checks
-  if(!is.vector(y)){stop("y must be a vector")}
-  if(!is.matrix(X)){stop("X must be a matrix")}
-  if(!is.matrix(A)){stop("A must be a matrix")}
-  if(nchain < 1){stop("nchain must be a positive integer")}
-  if(niter < 1){stop("niter must be a positive integer")}
-  if(nburn < 0){stop("nburn must be a non-negative integer")}
-  if(nthin < 1){stop("nthin must be a positive integer")}
-  y <- as.numeric(y)
-  if(min(y,na.rm=T)<0){stop("y must be non-negative")}
-  if(!is.numeric(X)){stop("X must be numeric")}
-  if(!is.numeric(A)){stop("A must be numeric")}
-  if(!is.logical(LinearT)){stop("LinearT must be logical")}
+BSTZINB = function(y, Xtilde, A, oind = NULL, LinearT = TRUE, nchain=3, niter=1000, nburn=500, nthin=1){
 
   N = length(y)
   n <- nrow(A)			    # Number of spatial units
@@ -52,14 +39,28 @@ BSTZINB = function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthin
   sid<-rep(1:n,nis)
   tid<-rep(1:nis[1],n)
   t <- tid / max(tid)
-  if(LinearT==T){
-    Xtilde = cbind(X,t)
+  if(is.null(oind)){
+    if(LinearT==T){
+      X = Xtilde
+      x0 = rep(0,nrow(Xtilde))
+    }else{
+      Tbs = bs(t,df=7)
+      colnames(Tbs) <- paste0("t",colnames(Tbs))
+      X = cbind(Xtilde,Tbs) # Covariates
+      x0 = rep(0,nrow(Xtilde))
+    }
   }else{
-    Tbs = bs(t,df=7)
-    colnames(Tbs) <- paste0("t",colnames(Tbs))
-    Xtilde = cbind(X,Tbs)
+    if(LinearT==T){
+      X = cbind(matrix(Xtilde[,-c(oind)],nrow(Xtilde)),t) # Covariates
+      x0 = Xtilde[,c(oind)]# Offset variable
+    }else{
+      Tbs = bs(t,df=7)
+      colnames(Tbs) <- paste0("t",colnames(Tbs))
+      X = cbind(matrix(Xtilde[,-c(oind)],nrow(Xtilde)),Tbs) # Covariates
+      x0 = Xtilde[,c(oind)]# Offset variable
+    }
   }
-  p = ncol(Xtilde)
+  p = ncol(X)
 
   ##########
   # Priors #
@@ -80,7 +81,7 @@ BSTZINB = function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthin
   # Store #
   ############
   Beta<-Alpha<-array(0,c(lastit,p,nchain))
-  colnames(Beta) <- colnames(Alpha) <- colnames(Xtilde)
+  colnames(Beta) <- colnames(Alpha) <- colnames(X)
   R<-R2<-matrix(0,lastit,nchain)
   Sigphi<-array(0,c(lastit,16,nchain))
   PHI1<-PHI2<-PHI3<-PHI4<-array(0,c(lastit,n,nchain))
@@ -125,18 +126,18 @@ BSTZINB = function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthin
     for (i in 1:niter){
 
       # Update alpha
-      mu<-Xtilde%*%alpha+Phi1+Phi2*t
+      mu<-X%*%alpha+x0+Phi1+Phi2*t
       w<-rpg(N,1,mu)
       z<-(y1-1/2)/w
-      v<-solve(crossprod(sqrt(w)*Xtilde)+T0a)
-      m<-v%*%(T0a%*%alpha0+t(sqrt(w)*Xtilde)%*%(sqrt(w)*(z-Phi1-Phi2*t)))
+      v<-solve(crossprod(sqrt(w)*X)+T0a)
+      m<-v%*%(T0a%*%alpha0+t(sqrt(w)*X)%*%(sqrt(w)*(z-x0-Phi1-Phi2*t)))
       alpha<-c(rmvnorm(1,m,v))
 
       # Update phi1
       priorprec<-as.numeric(1/(Sigmaphi[1,1]-Sigmaphi[1,-1]%*%solve(Sigmaphi[-1,-1])%*%Sigmaphi[-1,1]))*Q # Prior Prec of phi1|phi2,phi3,phi4
       priormean<-diag(n)%x%(Sigmaphi[1,-1]%*%solve(Sigmaphi[-1,-1]))%*%c(t(phimat[,-1]))      # Prior mean of phi1|phi2,phi3,phi4
       prec<-priorprec+as.spam(diag(tapply(w,sid,sum),n,n))
-      m<-c(priorprec%*%priormean)+tapply(w*(z-Xtilde%*%alpha-Phi2*t),sid,sum)
+      m<-c(priorprec%*%priormean)+tapply(w*(z-x0-Phi2*t),sid,sum)
       if(is.positive.definite(prec%>%as.matrix)) phi1<-rmvnorm.canonical(1, m, prec)[1,]
 
       # Center
@@ -147,7 +148,7 @@ BSTZINB = function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthin
       priorprec<-as.numeric(1/(Sigmaphi[2,2]-Sigmaphi[2,-2]%*%solve(Sigmaphi[-2,-2])%*%Sigmaphi[-2,2]))*Q # Prior Prec of phi2|phi1,phi3,phi4
       priormean<-diag(n)%x%(Sigmaphi[2,-2]%*%solve(Sigmaphi[-2,-2]))%*%c(t(phimat[,-2]))      # Prior mean of phi2|phi1,phi3,phi4
       prec<-priorprec+as.spam(diag(tapply(w*t^2,sid,sum),n,n))
-      m<-c(priorprec%*%priormean)+tapply(t*w*(z-Xtilde%*%alpha-Phi1),sid,sum)
+      m<-c(priorprec%*%priormean)+tapply(t*w*(z-x0-Phi1),sid,sum)
       if(is.positive.definite(prec%>%as.matrix)) phi2<-rmvnorm.canonical(1, m, prec)[1,]
 
       # Center
@@ -165,8 +166,8 @@ BSTZINB = function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthin
       }
 
       # Update at-risk indicator y1 (W in paper)
-      eta1<-Xtilde%*%alpha+Phi1+Phi2*t
-      eta2<-Xtilde%*%beta+Phi3+Phi4*t              # Use all n observations
+      eta1<-X%*%alpha+x0+Phi1+Phi2*t
+      eta2<-X%*%beta+x0+Phi3+Phi4*t              # Use all n observations
       pii<-pmax(0.01,pmin(0.99,inv.logit(eta1)))  # at-risk probability
       q<-pmax(0.01,pmin(0.99,1/(1+exp(eta2))))                      # Pr(y=0|y1=1)
       theta<-pii*(q^r)/(pii*(q^r)+1-pii)         # Conditional prob that y1=1 given y=0 -- i.e. Pr(chance zero|observed zero)
@@ -175,21 +176,20 @@ BSTZINB = function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthin
       nis1<-tapply(y1,sid,sum)
 
       # Update beta
-      eta<-Xtilde[y1==1,]%*%beta+Phi3[y1==1]+Phi4[y1==1]*t[y1==1]
+      eta<-X[y1==1,]%*%beta+x0[y1==1]+Phi3[y1==1]+Phi4[y1==1]*t[y1==1]
       w<-rpg(N1,y[y1==1]+r,eta)                               # Polya weights
       z<-(y[y1==1]-r)/(2*w)
-      v<-solve(crossprod(Xtilde[y1==1,]*sqrt(w))+T0b)
-      m<-v%*%(T0b%*%beta0+t(sqrt(w)*Xtilde[y1==1,])%*%(sqrt(w)*(z-Phi3[y1==1]-Phi4[y1==1]*t[y1==1])))
+      v<-solve(crossprod(X[y1==1,]*sqrt(w))+T0b)
+      m<-v%*%(T0b%*%beta0+t(sqrt(w)*X[y1==1,])%*%(sqrt(w)*(z-x0[y1==1]-Phi3[y1==1]-Phi4[y1==1]*t[y1==1])))
       beta<-c(rmvnorm(1,m,v))
 
       # Update phi3
       n1<-length(nis1[nis1>0])
-
       priorprec<-as.numeric(1/(Sigmaphi[3,3]-Sigmaphi[3,-3]%*%solve(Sigmaphi[-3,-3])%*%Sigmaphi[-3,3]))*Q # Prior Prec of phi3|phi1,phi2,phi4
       priormean<-diag(n)%x%(Sigmaphi[3,-3]%*%solve(Sigmaphi[-3,-3]))%*%c(t(phimat[,-3]))      # Prior mean of phi3|phi1,phi2,phi4
       prec<-priorprec+as.spam(diag(tapply(w,sid[y1==1],sum),n,n))
       tmp<-rep(0,n)                       # Account empty blocks
-      tmp[nis1>0]<-tapply(w*(z-Xtilde[y1==1,]%*%beta-Phi4[y1==1]*t[y1==1]),sid[y1==1],sum)
+      tmp[nis1>0]<-tapply(w*(z-x0[y1==1]-Phi4[y1==1]*t[y1==1]),sid[y1==1],sum)
       m<-c(priorprec%*%priormean)+tmp
       if(is.positive.definite(prec%>%as.matrix)) phi3<-rmvnorm.canonical(1, m, prec)[1,]
 
@@ -203,7 +203,7 @@ BSTZINB = function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthin
 
       prec<-priorprec+as.spam(diag(tapply(w*t[y1==1]^2,sid[y1==1],sum),n,n))
       tmp<-rep(0,n)                       # Account for empty counties
-      tmp[nis1>0]<-tapply(t[y1==1]*w*(z-Xtilde[y1==1,]%*%beta-Phi3[y1==1]),sid[y1==1],sum)
+      tmp[nis1>0]<-tapply(t[y1==1]*w*(z-x0[y1==1]-Phi3[y1==1]),sid[y1==1],sum)
       m<-c(priorprec%*%priormean)+tmp
       if(is.positive.definite(prec%>%as.matrix)) phi4<-rmvnorm.canonical(1, m, prec)[1,]
 
@@ -245,7 +245,7 @@ BSTZINB = function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthin
         I[j,,chain]<-y1
       }
 
-      # if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/nsim*100,2),"% completed"))
+      # if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/niter*100,2),"% completed"))
       if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/niter*100,2),"% completed |","Test:",conv.test(R[,chain])))
 
     }

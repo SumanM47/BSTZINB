@@ -45,6 +45,7 @@ IAcities = USAcities %>% filter(state_id=="IA")
 countyname = unique(IAcities$county_name)
 A = get_adj_mat(county.adjacency,countyname,c("IA"))
 m<-apply(A,1,sum)
+tpop = USAcities %>% filter(state_id=="IA") %>% group_by(county_fips) %>% summarise(tpop=population) %>% .[,2] %>% unlist %>% as.numeric # log population of counties
 ```
 
 Next, we will set some parameters up:
@@ -57,6 +58,8 @@ nis<-rep(24,n) 	 # Number of individuals per county; here it's balanced -- 24 pe
 sid<-rep(1:n,nis)
 tid<-rep(1:nis[1],n)
 N<-length(sid) 		# Total number of observations
+offset <- rep(log(tpop),nis)
+offset <- offset-mean(offset)
 ```
 
 Next, we generate the spatial effects:
@@ -89,12 +92,10 @@ Followed by the fixed effects and the covariates `X`:
 
 ```{r}
 library(boot)
-tpop = USAcities %>% filter(state_id=="IA") %>% group_by(county_fips) %>% summarise(tpop=population) %>% .[,2] %>% unlist %>% as.numeric
-x = rep(log(tpop),nis)
-x = (x-mean(x))/sd(x)
-# set.seed(2023); x = rnorm(N)
+set.seed(2024); x = rnorm(N)
 t <- tid / max(tid)
-X <-cbind(1,x)                       # Design matrix, can add additional covariates (e.g., race, age, gender)
+X <- cbind(1,x)                       # Design matrix, can add additional covariates (e.g., race, age, gender)
+colnames(X) <- c("intercept","x")
 Xtilde <-cbind(1,x,sin(t))
 p <- ncol(Xtilde)
 ```
@@ -105,8 +106,7 @@ Next, we set up the binomial and the count parts of the data:
 # Binomial part
 true.alpha<-rep(0.1,p)
 true.alpha[1:2]<-c(-0.25,0.25)
-# true.alpha <- c(-0.25,0.25,-0.5,0.25)
-eta1<-Xtilde%*%true.alpha+Phi1+Phi2*t
+eta1<-Xtilde%*%true.alpha+offset+Phi1+Phi2*t
 pii<-inv.logit(eta1)        # 1-pr("structural zero")
 u<-rbinom(N,1,pii)          # at-risk indicator
 N1<-sum(u)          
@@ -119,7 +119,7 @@ tmp<-u
 tmp[u==0]<-0                       # If in structural group then set tmp to 0
 nis1<-tapply(tmp,sid,sum)          # Number of at risk observations in each county
 
-eta2<-Xtilde[u==1,]%*%true.beta+Phi3[u==1]+Phi4[u==1]*t[u==1] # Linear predictor for count part
+eta2<-Xtilde[u==1,]%*%true.beta+offset[u==1]+Phi3[u==1]+Phi4[u==1]*t[u==1] # Linear predictor for count part
 true.r<-1.25                       # NB dispersion 
 psi<-exp(eta2)/(1+exp(eta2))       # Prob of success
 mu<-true.r*psi/(1-psi)             # NB mean
@@ -137,9 +137,7 @@ pzero<-length(y[y==0])/N             # Proportion of zeros
 # quantile(tapply(u,id,sum))         # Number of at-risk observations per county *for all 5 years*
 # quantile(y)
 
-
-this_dat <- data.frame(sid,tid,y,X)
-head(this_dat)
+this_dat <- data.frame(sid,tid,offset,y,X)
 tbl_summary(this_dat) %>% modify_header(label = "**Coefficients**")
 ```
 
@@ -148,6 +146,7 @@ Once we have generated the data, we shall now use the functions available in our
 First, we'll focus on summarizing and visualizing the data by producing spatial maps and other plots and summaries of the data. The following code generates a spatial map of cumulative deaths in the state of Iowa:
 
 ```{r}
+library(ggplot2)
 USDmapCount(state.sel = c("IA"),
             dat = this_dat,
             scol  = 1,
@@ -169,6 +168,7 @@ barplot(tmp, ylab="Percent",xlab="Count",col="lightblue")
 library(CorrMixed)
 # Plot individual profiles + mean
 Spaghetti.Plot(Dataset = this_dat, Outcome = y, Id=sid, Time = tid)
+# Implication??
 
 # Moran's I
 library(ape)
@@ -211,12 +211,13 @@ USDmapCount(state.sel = c("IA"),
 Now, we shall apply the different models on this data. We'll start by fitting the Bayesian Spatiotemporal Poisson (BSTP) model using the functions `BNB` and `BZINB`:
 
 ```{r}
-res0 = BNB(y, X, A, nchain=3, niter=100, nburn=20)
+Xtilde = cbind(offset,X)
+
+res0 = BNB(y, Xtilde, A, oind=1, nchain=3, niter=100, nburn=50)
 glimpse(res0)
 
-res1 = BZINB(y, X, A, nchain=3, niter=100, nburn=20)
+res1 = BZINB(y, Xtilde, A, oind=1, nchain=3, niter=100, nburn=50)
 glimpse(res1)
-
 
 apply(res0$Beta,2,mean)
 apply(res1$Beta,2,mean)
@@ -225,23 +226,24 @@ apply(res1$Beta,2,mean)
 Next will be the Bayesian Spatiotemporal Negative Binomial (BSTNB) model using the function `BSTNB`:
 
 ```{r}
-res2 = BSTNB(y, X, A, nchain=3, niter=100, nburn=20)
+res2 = BSTNB(y, Xtilde, A, oind=1, nchain=3, niter=100, nburn=50)
 glimpse(res2)
+
+apply(res2$Beta,2,mean)
 ```
 
 Followed by a Bayesian Spatiotemporal Zero Inflated Negative Binomial (BSTZINB) model with linear temporal trend using the `BSTZINB` function with option `LinearT` set to `TRUE`. We can check the convergence of different parameters for this model using the `conv.test` function supplied with the package. DIC can also be computed using the supplied `compute_ZINB_DIC` function.
 
 ```{r,fig.width=6,fig.height=3,fig.align='center'}
-res3 = BSTZINB(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
+res3 = BSTZINB(y, Xtilde, A, oind=1, LinearT=TRUE, nchain=3, niter=100, nburn=50, nthin=1)
 glimpse(res3)
-
 
 conv.test(res3$Alpha) ## Convergence test for Alpha parameters
 conv.test(res3$Beta) ## Convergence test for Beta parameters
 conv.test(res3$R) ## Convergence test for R parameters
 
 ## Plotting the chains for the parameters
-par(mfrow=c(1,3));plot(res3$R[,1],main="R");plot(res3$R[,2],main="R");plot(res3$R[,3],main="R")
+par(mfrow=c(1,3));plot(res3$R[,1],type='o',main="R");plot(res3$R[,2],type='o',main="R");plot(res3$R[,3],type='o',main="R")
 par(mfrow=c(1,3));plot(res3$Alpha[,1,1],type='o',main="Alpha");plot(res3$Alpha[,1,2],type='o',main="Alpha");plot(res3$Alpha[,1,3],type='o',main="Alpha")
 
 ## Checking the estimated beta with the true beta
@@ -256,7 +258,7 @@ compute_ZINB_DIC(y,res3,dim(res3$Beta)[1],3)
 And, another BSTZINB model but with spline fitted non-linear temporal trend is fitted below by switching the `LinearT` to `FALSE`. Corresponding convergence tests, plots and DIC computation are also presented. We can compare the two DICs to pick the best fit model.
 
 ```{r,fig.width=6,fig.height=3,fig.align='center'}
-res4 = BSTZINB(y, X, A, LinearT=FALSE, nchain=3, niter=100, nburn=20)
+res4 = BSTZINB(y, Xtilde, A, oind=1, LinearT=FALSE, nchain=3, niter=100, nburn=50)
 glimpse(res4)
 
 ## Convergence tests
@@ -264,7 +266,7 @@ conv.test(res4$Alpha) ## Alpha parameters
 conv.test(res4$Beta) ## Beta parameters
 conv.test(res4$R) ## R parameters
 
-par(mfrow=c(1,3));plot(res4$R[,1],main="R");plot(res4$R[,2],main="R");plot(res4$R[,3],main="R")
+par(mfrow=c(1,3));plot(res4$R[,1],type='o',main="R");plot(res4$R[,2],type='o',main="R");plot(res4$R[,3],type='o',main="R")
 par(mfrow=c(1,3));plot(res4$Alpha[,1,1],type='o',main="Alpha");plot(res4$Alpha[,1,2],type='o',main="Alpha");plot(res4$Alpha[,1,3],type='o',main="Alpha")
 
 ## Posterior means for beta and R
@@ -284,7 +286,7 @@ ResultTableSummary(res3)
 A more detailed summary can be obtained by using the function `ResultTableSummary2`. This functions takes the data (`y`, `X`, `A`, `nt`) as input, runs all of the above 4 models, computes DICs and checks convergences, and finally summarizes them:
 
 ```{r}
-ResultTableSummary2(y, X, A, nchain=3, niter=100, nburn=20, nthin=1)
+ResultTableSummary2(y, Xtilde, A, oind=1, LinearT=FALSE, nchain=3, niter=100, nburn=20, nthin=1)
 ```
 
 Next, we'll focus on the outputs of these models and visualizing them. First, we'll visualize a time-averaged Eta parameter in the following way:

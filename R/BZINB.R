@@ -4,12 +4,13 @@
 #' @description
 #' Generate posterior samples for the parameters in a Bayesian Zero Inflated Negative Binomial Model
 #'
-#' @usage BZINB(y,X,A,
-#'              nchain=3,niter=100,nburn=20,nthin=1)
+#' @usage BZINB(y,Xtilde,A, oind=NULL,
+#'              nchain=3,niter=1000,nburn=500,nthin=1)
 #'
 #' @param y vector of counts, must be non-negative
-#' @param X matrix of covariates, numeric
+#' @param Xtilde matrix of offset and covariates, numeric
 #' @param A adjacency matrix, numeric
+#' @param oind indices of offset
 #' @param nchain positive integer, number of MCMC chains to be run
 #' @param niter positive integer, number of iterations in each chain
 #' @param nburn non-negative integer, number of iterations to be discarded as burn-in samples
@@ -22,7 +23,7 @@
 #'
 #' @return list of posterior samples of the parameters of the model
 #' @export
-BZINB = function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
+BZINB = function(y, Xtilde, A, oind = NULL, nchain=3, niter=1000, nburn=500, nthin=1){
 
   N = length(y)
   n <- nrow(A)			    # Number of spatial units
@@ -32,6 +33,13 @@ BZINB = function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
   sid<-rep(1:n,nis)
   tid<-rep(1:nis[1],n)
   N<-length(sid) 		  # Total number of observations
+  if(is.null(oind)){
+    X = Xtilde
+    x0 = rep(0,nrow(Xtilde))
+  }else{
+    X = matrix(Xtilde[,-c(oind)],nrow(Xtilde)) # Covariates
+    x0 = Xtilde[,c(oind)]# Offset variable
+  }
   p = ncol(X)
 
   ##########
@@ -77,11 +85,11 @@ BZINB = function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
     for (i in 1:niter){
 
       # Update alpha
-      mu<-X%*%alpha
+      mu<-X%*%alpha+x0
       w<-rpg(N,1,mu)
       z<-(y1-1/2)/w
       v<-solve(crossprod(sqrt(w)*X)+T0a)
-      m<-v%*%(T0a%*%alpha0+t(sqrt(w)*X)%*%(sqrt(w)*z))
+      m<-v%*%(T0a%*%alpha0+t(sqrt(w)*X)%*%(sqrt(w)*(z-x0)))
       alpha<-c(rmvnorm(1,m,v))
 
       # Update r
@@ -95,21 +103,21 @@ BZINB = function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
       }
 
       # Update at-risk indicator y1 (W in paper)
-      eta1<-X%*%alpha
-      eta2<-X%*%beta              # Use all n observations
-      pii<-pmax(0.01,pmin(0.99,inv.logit(eta1)))  # at-risk probability
+      eta1<-X%*%alpha+x0
+      eta2<-X%*%beta+x0              # Use all n observations
+      pi<-pmax(0.01,pmin(0.99,inv.logit(eta1)))  # at-risk probability
       q<-pmax(0.01,pmin(0.99,1/(1+exp(eta2))))                      # Pr(y=0|y1=1)
-      theta<-pii*(q^r)/(pii*(q^r)+1-pii)         # Conditional prob that y1=1 given y=0 -- i.e. Pr(chance zero|observed zero)
+      theta<-pi*(q^r)/(pi*(q^r)+1-pi)         # Conditional prob that y1=1 given y=0 -- i.e. Pr(chance zero|observed zero)
       y1[y==0]<-rbinom(N0,1,theta[y==0])      # If y=0, then draw a "chance zero" w.p. theta, otherwise y1=1
       N1<-sum(y1)
       nis1<-tapply(y1,sid,sum)
 
       # Update beta
-      eta<-X[y1==1,]%*%beta
-      w<-rpg(N1,y[y1==1]+r,eta)                              # Polya weights
+      eta<-x0[y1==1]+X[y1==1,]%*%beta
+      w<-rpg(N1,y[y1==1]+r,eta)                     # Polya weights
       z<-(y[y1==1]-r)/(2*w)                                   # Latent "response"
       v<-solve(crossprod(X[y1==1,]*sqrt(w))+T0b)
-      m<-v%*%(T0b%*%beta0+t(sqrt(w)*X[y1==1,])%*%(sqrt(w)*z))
+      m<-v%*%(T0b%*%beta0+t(sqrt(w)*X[y1==1,])%*%(sqrt(w)*(z-x0[y1==1])))
       beta<-c(rmvnorm(1,m,v))
 
       # Update r2 using Gibbs as in Dadaneh et al and Zhou and Carin #
@@ -120,7 +128,7 @@ BZINB = function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
       for(j in 1:N1) l[j]<-sum(rbinom(ytmp[j],1,round(r/(r+1:ytmp[j]-1),6))) # Could try to avoid loop; rounding avoids numerical stability
 
       # Update r from conjugate gamma distribution given l and psi
-      eta<-X[y1==1,]%*%beta
+      # eta<-X[y1==1,]%*%beta
       psi<-exp(eta)/(1+exp(eta))
       r2<-rgamma(1,0.01+sum(l),0.01-sum(log(1-psi))) # Gamma(0.01,0.01) prior for r
 

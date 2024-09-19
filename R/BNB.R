@@ -4,12 +4,13 @@
 #' @description
 #' Generate posterior samples for the parameters in a Bayesian Negative Binomial Model
 #'
-#' @usage BNB(y, X, A,
-#'            nchain=3, niter=100, nburn=20, nthin=1)
+#' @usage BNB(y, Xtilde, A, oind=NULL,
+#'            nchain=3, niter=1000, nburn=500, nthin=1)
 #'
 #' @param y vector of counts, must be non-negative
-#' @param X matrix of covariates, numeric
+#' @param Xtilde matrix of offset and covariates, numeric
 #' @param A adjacency matrix, numeric
+#' @param oind indices for offset
 #' @param nchain positive integer, number of MCMC chains to be run
 #' @param niter positive integer, number of iterations in each chain
 #' @param nburn non-negative integer, number of iterations to be discarded as burn-in samples
@@ -23,7 +24,7 @@
 #' @return list of posterior samples of the parameters of the model
 #' @export
 
-BNB = function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
+BNB = function(y, Xtilde, A, oind=NULL, nchain=3, niter=1000, nburn=500, nthin=1){
 
   N = length(y)
   n <- nrow(A)			    # Number of spatial units
@@ -33,6 +34,13 @@ BNB = function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
   sid<-rep(1:n,nis)
   tid<-rep(1:nis[1],n)
   N<-length(sid) 		  # Total number of observations
+  if(is.null(oind)){
+    X = Xtilde
+    x0 = rep(0,nrow(Xtilde))
+  }else{
+    X = matrix(Xtilde[,-c(oind)],nrow(Xtilde)) # Covariates
+    x0 = Xtilde[,c(oind)]# Offset variable
+  }
   p = ncol(X)
 
   ##########
@@ -88,11 +96,11 @@ BNB = function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
       }
 
       # Update beta
-      eta<-X%*%beta
+      eta<-X%*%beta+x0
       w<-rpg(N,y+r,eta)                               # Polya weights
       z<-(y-r)/(2*w)
       v<-solve(crossprod(X*sqrt(w))+T0b)
-      m<-v%*%(T0b%*%beta0+t(sqrt(w)*X)%*%(sqrt(w)*(z)))
+      m<-v%*%(T0b%*%beta0+t(sqrt(w)*X)%*%(sqrt(w)*(z-x0)))
       beta<-c(rmvnorm(1,m,v))
 
       # Store

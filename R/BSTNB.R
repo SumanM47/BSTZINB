@@ -4,12 +4,13 @@
 #' @description
 #' Generate posterior samples for the parameters in a Bayesian Spatiotemporal Negative Binomial Model
 #'
-#' @usage BSTNB(y,X,A,
-#'             nchain=3,niter=100,nburn=20,nthin=1)
+#' @usage BSTNB(y,Xtilde,A, oind=NULL,
+#'             nchain=3,niter=1000,nburn=500,nthin=1)
 #'
 #' @param y vector of counts, must be non-negative
-#' @param X matrix of covariates, numeric
+#' @param Xtilde matrix of covariates, numeric
 #' @param A adjacency matrix, numeric
+#' @param oind indices of offset
 #' @param nchain positive integer, number of MCMC chains to be run
 #' @param niter positive integer, number of iterations in each chain
 #' @param nburn non-negative integer, number of iterations to be discarded as burn-in samples
@@ -25,20 +26,7 @@
 #'
 #' @return list of posterior samples of the parameters of the model
 #' @export
-BSTNB = function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
-
-  ## Run the necessary checks
-  if(!is.vector(y)){stop("y must be a vector")}
-  if(!is.matrix(X)){stop("X must be a matrix")}
-  if(!is.matrix(A)){stop("A must be a matrix")}
-  if(nchain < 1){stop("nchain must be a positive integer")}
-  if(niter < 1){stop("nsim must be a positive integer")}
-  if(nburn < 0){stop("nburn must be a non-negative integer")}
-  if(nthin < 1){stop("nthin must be a positive integer")}
-  y <- as.numeric(y)
-  if(min(y,na.rm=T)<0){stop("y must be non-negative")}
-  if(!is.numeric(X)){stop("X must be numeric")}
-  if(!is.numeric(A)){stop("A must be numeric")}
+BSTNB = function(y, Xtilde, A, oind = NULL, nchain=3, niter=1000, nburn=500, nthin=1){
 
   N = length(y)
   n <- nrow(A)			    # Number of spatial units
@@ -49,6 +37,13 @@ BSTNB = function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
   tid<-rep(1:nis[1],n)
   t <- tid / max(tid)
   N<-length(sid) 		  # Total number of observations
+  if(is.null(oind)){
+    X = Xtilde
+    x0 = rep(0,nrow(Xtilde))
+  }else{
+    X = matrix(Xtilde[,-c(oind)],nrow(Xtilde)) # Covariates
+    x0 = Xtilde[,c(oind)]# Offset variable
+  }
   p = ncol(X)
 
   ##########
@@ -69,7 +64,7 @@ BSTNB = function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
   ############
   # Store #
   ############
-  Beta<-array(0,c(lastit,p,nchain))
+  Beta<-array(NA,c(lastit,p,nchain))
   colnames(Beta) <- colnames(X)
   R<-R2<-matrix(0,lastit,nchain)
   Sigphi<-array(0,c(lastit,4,nchain))
@@ -122,22 +117,22 @@ BSTNB = function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
       for(j in 1:N) l[j]<-sum(rbinom(ytmp[j],1,round(r/(r+1:ytmp[j]-1),6))) # Could try to avoid loop; rounding avoids numerical stability
 
       # Update r from conjugate gamma distribution given l and psi
-      # psi<-exp(eta2)/(1+exp(eta2))
-      # r2<-rgamma(1,0.01+sum(l),0.01-sum(log(1-psi)))
+      psi<-exp(eta2)/(1+exp(eta2))
+      r2<-rgamma(1,0.01+sum(l),0.01-sum(log(1-psi)))
 
       # Update beta
-      eta<-X%*%beta+Phi3+Phi4*t
+      eta<-X%*%beta+x0+Phi3+Phi4*t
       w<-rpg(N,y+r,eta)                               # Polya weights
       z<-(y-r)/(2*w)
       v<-solve(crossprod(X*sqrt(w))+T0b)
-      m<-v%*%(T0b%*%beta0+t(sqrt(w)*X)%*%(sqrt(w)*(z-Phi3-Phi4*t)))
+      m<-v%*%(T0b%*%beta0+t(sqrt(w)*X)%*%(sqrt(w)*(z-x0-Phi3-Phi4*t)))
       beta<-c(rmvnorm(1,m,v))
 
       # Update phi3
       priorprec<-as.numeric(1/(Sigmaphi[1,1]-Sigmaphi[1,-1]%*%solve(Sigmaphi[-1,-1])%*%Sigmaphi[-1,1]))*Q # Prior Prec of phi3|phi1,phi2,phi4
       priormean<-diag(n)%x%(Sigmaphi[1,-1]%*%solve(Sigmaphi[-1,-1]))%*%c(t(phimat[,-1]))      # Prior mean of phi3|phi1,phi2,phi4
       prec<-priorprec+as.spam(diag(tapply(w,sid,sum),n,n))
-      tmp<-tapply(w*(z-X%*%beta-Phi4*t),sid,sum)
+      tmp<-tapply(w*(z-x0-Phi4*t),sid,sum)
       m<-c(priorprec%*%priormean)+tmp
       if(is.positive.definite(prec%>%as.matrix)) phi3<-rmvnorm.canonical(1, m, prec)[1,]
 
@@ -150,7 +145,7 @@ BSTNB = function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
       priormean<-diag(n)%x%(Sigmaphi[2,-2]%*%solve(Sigmaphi[-2,-2]))%*%c(t(phimat[,-2]))      # Prior mean of phi4|phi1,phi2,phi3
 
       prec<-priorprec+as.spam(diag(tapply(w*t^2,sid,sum),n,n))
-      tmp<-tapply(t*w*(z-X%*%beta-Phi3),sid,sum)
+      tmp<-tapply(t*w*(z-x0-Phi3),sid,sum)
       m<-c(priorprec%*%priormean)+tmp
       if(is.positive.definite(prec%>%as.matrix)) phi4<-rmvnorm.canonical(1, m, prec)[1,]
 
@@ -169,19 +164,19 @@ BSTNB = function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
         j<-(i-nburn)/nthin
         Beta[j,,chain]<-beta
         R[j,chain]<-r
-        # R2[j,chain]<-r2
+        R2[j,chain]<-r2
         Sigphi[j,,chain]<-c(Sigmaphi)
         PHI3[j,,chain]<-phi3
         PHI4[j,,chain]<-phi4
         Eta[j,,chain]<-eta
       }
 
-      # if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/nsim*100,2),"% completed"))
+      # if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/niter*100,2),"% completed"))
       if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/niter*100,2),"% completed |","Test:",conv.test(R[,chain])))
 
     }
   }
 
-  list.params = list(Alpha=NULL, Beta=Beta, R=R, Sigphi=Sigphi, PHI3=PHI3, PHI4=PHI4, Eta1=Eta)
+  list.params = list(Alpha=NULL, Beta=Beta, R=R, R2=R2, Sigphi=Sigphi, PHI3=PHI3, PHI4=PHI4, Eta1=Eta)
   return(list.params)
 }

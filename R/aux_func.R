@@ -60,7 +60,6 @@ get_adj_mat = function(county.adjacency,Countyvec,Statevec){
 #' @return summary table
 #' @export
 ResultTableSummary = function(bstfit){
-  if(is.null(bstfit$Beta)){stop("bstfit must have a named component Beta")}
 
   betamat  = apply(bstfit$Beta,c(1,2),mean)
   if(is.null(bstfit$Alpha)){
@@ -88,12 +87,13 @@ ResultTableSummary = function(bstfit){
 #' @description
 #' Fits BSTP, BSTNB and BSTZINB (with linear or non-linear temporal trend) to a given data and summarizes the results in a table
 #'
-#' @usage ResultTableSummary2(y,X,A,LinearT=FALSE,
+#' @usage ResultTableSummary2(y,Xtilde,A,oind=NULL,LinearT=FALSE,
 #'                            nchain=3,niter=100,nburn=20,nthin=1)
 #'
 #' @param y vector of counts, must be non-negative
-#' @param X matrix of covariates, numeric
+#' @param Xtilde matrix of offset and covariates, numeric
 #' @param A adjacency matrix, numeric
+#' @param oind indices of offset
 #' @param LinearT logical, whether to fit a linear or non-linear temporal trend
 #' @param nchain positive integer, number of MCMC chains to be run
 #' @param niter positive integer, number of iterations in each chain
@@ -115,7 +115,7 @@ ResultTableSummary = function(bstfit){
 #'
 #' @return summary tables for the different methods
 #' @export
-ResultTableSummary2 = function(y, X, A, LinearT=FALSE, nchain=3, niter=100, nburn=20, nthin=1){
+ResultTableSummary2 = function(y, Xtilde, A, oind=NULL, LinearT=FALSE, nchain=3, niter=100, nburn=20, nthin=1){
 
   if(!is.vector(y)){stop("y must be a vector")}
   if(!is.matrix(X)){stop("X must be a matrix")}
@@ -130,7 +130,7 @@ ResultTableSummary2 = function(y, X, A, LinearT=FALSE, nchain=3, niter=100, nbur
   if(!is.numeric(X)){stop("X must be numeric")}
   if(!is.numeric(A)){stop("A must be numeric")}
 
-  stfit4 = BSTZINB(y, X, A, LinearT=LinearT, nchain, niter, nburn, nthin)
+  stfit4 = BSTZINB(y, Xtilde, A, oind=oind, LinearT=LinearT, nchain, niter, nburn, nthin)
   alphamat = apply(stfit4$Alpha,c(1,2),mean)
   betamat  = apply(stfit4$Beta,c(1,2),mean)
   temp4 <- data.frame(matrix(NA,nrow(alphamat),ncol(alphamat)+ncol(betamat)+2))
@@ -155,7 +155,7 @@ ResultTableSummary2 = function(y, X, A, LinearT=FALSE, nchain=3, niter=100, nbur
   # ind3[paste("a",colnames(alphamat),sep=".")] <- conv.test(stfit3$Alpha)
   # ind3[paste("b",colnames(betamat),sep=".")] <- conv.test(stfit3$Beta)
 
-  stfit3 = BSTNB(y, X, A, nchain, niter, nburn, nthin)
+  stfit3 = BSTNB(y, Xtilde, A, oind=oind, nchain, niter, nburn, nthin)
   betamat  = apply(stfit3$Beta,c(1,2),mean)
   temp3 <- data.frame(matrix(NA,nrow(temp4),ncol(temp4)))
   colnames(temp3) <- colnames(temp4)
@@ -164,7 +164,7 @@ ResultTableSummary2 = function(y, X, A, LinearT=FALSE, nchain=3, niter=100, nbur
   ind3 = rep(NA,length(ind4)); names(ind3) <- names(ind4)
   ind3[paste("b",colnames(betamat),sep=".")] <- conv.test(stfit3$Beta)
 
-  stfit2 = BZINB(y, X, A, nchain, niter, nburn, nthin)
+  stfit2 = BZINB(y, Xtilde, A, oind=oind, nchain, niter, nburn, nthin)
   alphamat = apply(stfit2$Alpha,c(1,2),mean)
   betamat  = apply(stfit2$Beta,c(1,2),mean)
   temp2 <- data.frame(matrix(NA,nrow(temp4),ncol(temp4)))
@@ -176,7 +176,7 @@ ResultTableSummary2 = function(y, X, A, LinearT=FALSE, nchain=3, niter=100, nbur
   ind2[paste("a",colnames(alphamat),sep=".")] <- conv.test(stfit2$Alpha)
   ind2[paste("b",colnames(betamat),sep=".")] <- conv.test(stfit2$Beta)
 
-  stfit1 = BNB(y, X, A, nchain, niter, nburn, nthin)
+  stfit1 = BNB(y, Xtilde, A, oind=oind, nchain, niter, nburn, nthin)
   betamat  = apply(stfit1$Beta,c(1,2),mean)
   temp1 <- data.frame(matrix(NA,nrow(temp4),ncol(temp4)))
   colnames(temp1) <- colnames(temp4)

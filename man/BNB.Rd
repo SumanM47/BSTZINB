@@ -4,15 +4,17 @@
 \alias{BNB}
 \title{Fit a Bayesian Negative Binomial Model}
 \usage{
-BNB(y, X, A,
-           nchain=3, niter=100, nburn=20, nthin=1)
+BNB(y, Xtilde, A, oind=NULL,
+           nchain=3, niter=1000, nburn=500, nthin=1)
 }
 \arguments{
 \item{y}{vector of counts, must be non-negative}
 
-\item{X}{matrix of covariates, numeric}
+\item{Xtilde}{matrix of offset and covariates, numeric}
 
 \item{A}{adjacency matrix, numeric}
+
+\item{oind}{indices for offset}
 
 \item{nchain}{positive integer, number of MCMC chains to be run}
 

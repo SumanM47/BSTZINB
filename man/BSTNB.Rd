@@ -4,15 +4,17 @@
 \alias{BSTNB}
 \title{Fit a Bayesian Spatiotemporal Negative Binomial model}
 \usage{
-BSTNB(y,X,A,
-            nchain=3,niter=100,nburn=20,nthin=1)
+BSTNB(y,Xtilde,A, oind=NULL,
+            nchain=3,niter=1000,nburn=500,nthin=1)
 }
 \arguments{
 \item{y}{vector of counts, must be non-negative}
 
-\item{X}{matrix of covariates, numeric}
+\item{Xtilde}{matrix of covariates, numeric}
 
 \item{A}{adjacency matrix, numeric}
+
+\item{oind}{indices of offset}
 
 \item{nchain}{positive integer, number of MCMC chains to be run}
 
