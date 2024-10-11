@@ -13,17 +13,25 @@
 #' @param cname character vector of county names, must match those in USAcities
 #' @param uplim (optional) numeric, upper limit for the given quantity
 #'
+#' @importFrom stats cov
+#' @importFrom stats dnbinom
+#' @importFrom stats rbinom
+#' @importFrom stats reorder
+#' @importFrom stats rgamma
+#' @importFrom stats rnorm
+#' @importFrom stats runif
+#' @importFrom stats spline
+#' @importFrom stats var
 #' @import ggplot2
 #' @import maps
 #' @import dplyr
 #' @import viridis
 #' @import datasets
-#' @import utils
 #'
 #' @return spatial map of the required quantity over the specified region
 #' @export
 #'
-USDmapCount = function(state.sel,dat,scol,tcol=NULL,tsel=NULL,cname,uplim=NULL){
+USDmapCount <- function(state.sel,dat,scol,tcol=NULL,tsel=NULL,cname,uplim=NULL){
 
   if(!is.character(state.sel)){stop("state.sel must be character vector")}
   if(!is.numeric(scol)){stop("scol must be numeric")}
@@ -41,31 +49,31 @@ USDmapCount = function(state.sel,dat,scol,tcol=NULL,tsel=NULL,cname,uplim=NULL){
   if(prod(toupper(cname) %in% toupper(USAcities$county_name)) != 1){stop("County names do not match")}
 
   if(is.null(uplim)){
-    ulim = max(dat$y)
+    ulim <- max(dat$y)
   }else{
-    ulim = uplim
+    ulim <- uplim
   }
   stateabb <- toupper(state.sel)
   statefull <- tolower(datasets::state.name[which(datasets::state.abb == stateabb)])
   state.map <- map_data("county",region=statefull)
-  sid = names(dat) %>% .[scol]
-  tid = names(dat) %>% .[tcol]
+  sidd <- names(dat)[scol]
+  tidd <- names(dat)[tcol]
   if(is.null(tsel)){
-    zinb.summary     = dat %>% dplyr::group_by(sid) %>% dplyr::summarise("cnt"=mean(y))
+    zinb.summary <- dat %>% dplyr::group_by(pick(scol)) %>% dplyr::summarise(cnt=mean(.data$y))
   }else{
-    zinb.summary     = dat %>% dplyr::group_by(sid) %>% dplyr::filter(tid==tsel)
-    zinb.summary$cnt = zinb.summary$y
-    zinb.summary = zinb.summary %>% dplyr::select(sid,cnt)
+    zinb.summary <- dat %>% dplyr::group_by(pick(scol)) %>% dplyr::filter(get(tidd)==tsel)
+    zinb.summary$cnt <- zinb.summary$y
+    zinb.summary <- zinb.summary %>% dplyr::select(scol,ncol(zinb.summary))
   }
 
-  zinb.summary$cid = tolower(cname[zinb.summary$sid])
-  map.df  <- dplyr::left_join(state.map, zinb.summary, by = c("subregion"="cid"))
-  p <- ggplot2::ggplot(data = map.df, aes(x = long, y = lat, group=group)) +
+  zinb.summary$cid <- tolower(cname[unlist(zinb.summary[,sidd])])
+  map.df <- dplyr::left_join(state.map, zinb.summary, by = c("subregion"="cid"))
+  p <- ggplot2::ggplot(data = map.df, aes(x = .data$long, y = .data$lat, group = .data$group)) +
     ggplot2::geom_polygon(aes(fill = cnt), color="black") +
     ggplot2::scale_fill_gradientn(colours = viridis::viridis(25))+
     ggplot2::theme_bw() +
     ggplot2::labs(fill= "",
-         title = "", x="", y="")
+                  title = "", x="", y="")
   return(p)
 
 }
@@ -86,16 +94,24 @@ USDmapCount = function(state.sel,dat,scol,tcol=NULL,tsel=NULL,cname,uplim=NULL){
 #' @param cex.lab Positive number to control the size of the text in the axes labels. Defaults to 18.
 #' @param cex.legend Positive number to control the size of the text in the legend. Defaults to 18.
 #'
+#' @importFrom stats cov
+#' @importFrom stats dnbinom
+#' @importFrom stats rbinom
+#' @importFrom stats reorder
+#' @importFrom stats rgamma
+#' @importFrom stats rnorm
+#' @importFrom stats runif
+#' @importFrom stats spline
+#' @importFrom stats var
 #' @import dplyr
 #' @import boot
 #' @import ggplot2
 #' @import datasets
 #' @import graphics
-#' @import utils
 #'
 #' @return bar graph
 #' @export
-qRankPar = function(state.set,cname,bstfit,vn=12,
+qRankPar <- function(state.set,cname,bstfit,vn=12,
                     cex.title=18, cex.lab=18, cex.legend=18){
 
   if(!is.character(state.set)){stop("state.set must be character vector")}
@@ -114,16 +130,16 @@ qRankPar = function(state.set,cname,bstfit,vn=12,
   qij.mat <- matrix(boot::inv.logit(apply(bstfit$Eta1,2,mean)),nrow=ns)
   zinb.summary <- data.frame("County"=cname, "m" = rowMeans(qij.mat))
   zinb.summary <- zinb.summary[order(zinb.summary$m),]
-  zinb.summary$County = factor(zinb.summary$County)
-  zinb.summary.sample = zinb.summary[floor(seq(1,ns,length.out=vn)),]
+  zinb.summary$County <- factor(zinb.summary$County)
+  zinb.summary.sample <- zinb.summary[floor(seq(1,ns,length.out=vn)),]
 
   par(mfrow=c(1,1),mar=c(3,5,1,1))
-  p <- ggplot2::ggplot(zinb.summary.sample,aes(x=reorder(County, m), y=m, fill=County)) + ggplot2::geom_bar(alpha=0.8,stat="identity") +
+  p <- ggplot2::ggplot(zinb.summary.sample,aes(x=reorder(.data$County, .data$m), y=.data$m, fill=.data$County)) + ggplot2::geom_bar(alpha=0.8,stat="identity") +
     ggplot2::xlab("") + ggplot2::ylab("Probability at risk") + ggplot2::ylim(0,1) + ggplot2::theme_bw() + ggplot2::theme(legend.position = "")
   return(p + ggplot2::coord_flip()+ggplot2::theme(axis.title.x = element_text(size=cex.title),
-                                axis.text.x = element_text(size=cex.lab),
-                                axis.text.y = element_text(size=cex.lab),
-                                legend.text = element_text(size=cex.legend)))
+                                                  axis.text.x = element_text(size=cex.lab),
+                                                  axis.text.y = element_text(size=cex.lab),
+                                                  legend.text = element_text(size=cex.legend)))
 }
 
 #' @title Bar plot for time-averaged log-q estimates over top ranking counties (descending order)
@@ -142,16 +158,24 @@ qRankPar = function(state.set,cname,bstfit,vn=12,
 #' @param cex.lab Positive number to control the size of the text in the axes labels. Defaults to 18.
 #' @param cex.legend Positive number to control the size of the text in the legend. Defaults to 18.
 #'
+#' @importFrom stats cov
+#' @importFrom stats dnbinom
+#' @importFrom stats rbinom
+#' @importFrom stats reorder
+#' @importFrom stats rgamma
+#' @importFrom stats rnorm
+#' @importFrom stats runif
+#' @importFrom stats spline
+#' @importFrom stats var
 #' @import dplyr
 #' @import BayesLogit
 #' @import ggplot2
 #' @import datasets
 #' @import graphics
-#' @import utils
 #'
 #' @return bar graph
 #' @export
-qRankParTop = function(state.set,cname,bstfit,vn=12,
+qRankParTop <- function(state.set,cname,bstfit,vn=12,
                        cex.title=18, cex.lab=18, cex.legend=18){
 
   if(!is.character(state.set)){stop("state.set must be character vector")}
@@ -169,11 +193,11 @@ qRankParTop = function(state.set,cname,bstfit,vn=12,
   qij.mat <- matrix(boot::inv.logit(apply(bstfit$Eta1,2,mean)),nrow=ns)
   zinb.summary <- data.frame("County"=cname, "m" = rowMeans(qij.mat))
   zinb.summary <- zinb.summary[order(zinb.summary$m,decreasing = TRUE),]
-  zinb.summary$County = factor(zinb.summary$County)
-  zinb.summary.sample = zinb.summary[c(1:vn),]
+  zinb.summary$County <- factor(zinb.summary$County)
+  zinb.summary.sample <- zinb.summary[c(1:vn),]
 
   par(mfrow=c(1,1),mar=c(3,5,1,1))
-  p <- ggplot2::ggplot(zinb.summary.sample,aes(x=reorder(County, m), y=m, fill=County)) +
+  p <- ggplot2::ggplot(zinb.summary.sample,aes(x=reorder(.data$County, .data$m), y=.data$m, fill=.data$County)) +
     ggplot2::geom_bar(alpha=0.8,stat="identity") +
     ggplot2::xlab("") +
     ggplot2::ylab("Probability at risk") +
@@ -181,9 +205,9 @@ qRankParTop = function(state.set,cname,bstfit,vn=12,
     ggplot2::theme(legend.position = "")
 
   return(p + ggplot2::coord_flip()+ggplot2::theme(axis.title.x = element_text(size=cex.title),
-                                axis.text.x = element_text(size=cex.lab),
-                                axis.text.y = element_text(size=cex.lab),
-                                legend.text = element_text(size=cex.legend)))
+                                                  axis.text.x = element_text(size=cex.lab),
+                                                  axis.text.y = element_text(size=cex.lab),
+                                                  legend.text = element_text(size=cex.legend)))
 }
 
 #' @title Time-trend curve over the study time domain for counties in the US
@@ -202,16 +226,24 @@ qRankParTop = function(state.set,cname,bstfit,vn=12,
 #' @param cex.lab Positive number to control the size of the text in the axes labels. Defaults to 18.
 #' @param cex.legend Positive number to control the size of the text in the legend. Defaults to 18.
 #'
+#' @importFrom stats cov
+#' @importFrom stats dnbinom
+#' @importFrom stats rbinom
+#' @importFrom stats reorder
+#' @importFrom stats rgamma
+#' @importFrom stats rnorm
+#' @importFrom stats runif
+#' @importFrom stats spline
+#' @importFrom stats var
 #' @import datasets
 #' @import ggplot2
 #' @import dplyr
 #' @import splines
-#' @import reshape
-#' @import utils
+#' @importFrom reshape melt
 #'
 #' @return time-trend curves
 #' @export
-TimetrendCurve = function(bstfit,cname,vn=5,smooth.mode=TRUE,
+TimetrendCurve <- function(bstfit,cname,vn=5,smooth.mode=TRUE,
                           cex.title=18, cex.lab=18, cex.legend=18){
 
   if(!is.character(cname)){stop("cname must be character vector")}
@@ -226,27 +258,25 @@ TimetrendCurve = function(bstfit,cname,vn=5,smooth.mode=TRUE,
   ns <- dim(bstfit$PHI1)[2]
   nt <- dim(bstfit$Eta1)[2]/ns
 
-  time = c(1:nt)
-  df   = data.frame(matrix(apply(bstfit$Eta1,2,mean),nrow=ns)); rownames(df) <- factor(cname)
-  df2 = data.frame(time,t(df[seq(1,ns,length.out=vn),]))
+  time <- c(1:nt)
+  df <- data.frame(matrix(apply(bstfit$Eta1,2,mean),nrow=ns)); rownames(df) <- factor(cname)
+  df2 <- data.frame(time,t(df[seq(1,ns,length.out=vn),]))
   if(smooth.mode){
-    time = spline(df2[,1],df2[,2])$x
+    time <- spline(df2[,1],df2[,2])$x
     df2 <- data.frame(time,apply(df2[,-1],2,function(w) {spline(df2[,1],w)$y}))
   }
-  dd = reshape::melt(df2,c("time"))
+  dd <- reshape::melt(df2,c("time"))
 
-  spd.plot <- ggplot2::ggplot(dd, aes(x=time,y=value)) +
-    ggplot2::geom_line(aes(colour = variable, group = variable),linewidth=1.2)+
-    ggplot2::geom_line(aes(time,0),color="red",linewidth=1.2,lty=2) + ggplot2::ylab("") + ggplot2::xlab("") +
+  spd.plot <- ggplot2::ggplot(dd, aes(x=.data$time,y=.data$value)) +
+    ggplot2::geom_line(aes(colour = .data$variable, group = .data$variable),linewidth=1.2)+
+    ggplot2::geom_line(aes(.data$time,0),color="red",linewidth=1.2,lty=2) + ggplot2::ylab("") + ggplot2::xlab("") +
     ggplot2::theme(legend.position = "right",
-          legend.title = element_blank(),
-          legend.text = element_text(size=cex.legend),
-          axis.text.x = element_text(size=cex.lab),
-          axis.text.y = element_text(size=cex.lab),
-          axis.title.x = element_text(size=cex.title))
+                   legend.title = element_blank(),
+                   legend.text = element_text(size=cex.legend),
+                   axis.text.x = element_text(size=cex.lab),
+                   axis.text.y = element_text(size=cex.lab),
+                   axis.title.x = element_text(size=cex.title))
 
   return(spd.plot)
 
 }
-
-

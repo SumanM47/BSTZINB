@@ -4,17 +4,15 @@
 \alias{BSTZINB}
 \title{Fit a Bayesian Spatiotemporal Zero Inflated Negative Binomial model}
 \usage{
-BSTZINB(y,Xtilde,A,oind=NULL,LinearT = TRUE,
-            nchain=3,niter=1000,nburn=500,nthin=1)
+BSTZINB(y,X,A,LinearT = TRUE,
+            nchain=3,niter=100,nburn=20,nthin=1)
 }
 \arguments{
 \item{y}{vector of counts, must be non-negative}
 
-\item{Xtilde}{matrix of offset and covariates, numeric}
+\item{X}{matrix of covariates, numeric}
 
 \item{A}{adjacency matrix, numeric}
-
-\item{oind}{indices of offset}
 
 \item{LinearT}{logical, whether to fit a linear or non-linear temporal trend}
 

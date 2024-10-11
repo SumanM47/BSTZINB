@@ -4,17 +4,15 @@
 \alias{ResultTableSummary2}
 \title{Generate a summary table of the outputs all different methods given the data}
 \usage{
-ResultTableSummary2(y,Xtilde,A,oind=NULL,LinearT=FALSE,
+ResultTableSummary2(y,X,A,LinearT=FALSE,
                            nchain=3,niter=100,nburn=20,nthin=1)
 }
 \arguments{
 \item{y}{vector of counts, must be non-negative}
 
-\item{Xtilde}{matrix of offset and covariates, numeric}
+\item{X}{matrix of covariates, numeric}
 
 \item{A}{adjacency matrix, numeric}
-
-\item{oind}{indices of offset}
 
 \item{LinearT}{logical, whether to fit a linear or non-linear temporal trend}
 

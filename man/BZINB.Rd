@@ -4,17 +4,15 @@
 \alias{BZINB}
 \title{Fit a Bayesian Zero Inflated Negative Binomial Model}
 \usage{
-BZINB(y,Xtilde,A, oind=NULL,
-             nchain=3,niter=1000,nburn=500,nthin=1)
+BZINB(y,X,A,
+             nchain=3,niter=100,nburn=20,nthin=1)
 }
 \arguments{
 \item{y}{vector of counts, must be non-negative}
 
-\item{Xtilde}{matrix of offset and covariates, numeric}
+\item{X}{matrix of covariates, numeric}
 
 \item{A}{adjacency matrix, numeric}
-
-\item{oind}{indices of offset}
 
 \item{nchain}{positive integer, number of MCMC chains to be run}
 
