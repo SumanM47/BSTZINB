@@ -59,7 +59,8 @@ USDmapCount <- function(state.sel,dat,scol,tcol=NULL,tsel=NULL,cname,uplim=NULL)
   sidd <- names(dat)[scol]
   tidd <- names(dat)[tcol]
   if(is.null(tsel)){
-    zinb.summary <- dat %>% dplyr::group_by(pick(scol)) %>% dplyr::summarise(cnt=mean(.data$y))
+    cnt <- NULL
+    zinb.summary <- dat %>% dplyr::group_by(pick(scol)) %>% dplyr::summarise('cnt'=mean(.data$y))
   }else{
     zinb.summary <- dat %>% dplyr::group_by(pick(scol)) %>% dplyr::filter(get(tidd)==tsel)
     zinb.summary$cnt <- zinb.summary$y

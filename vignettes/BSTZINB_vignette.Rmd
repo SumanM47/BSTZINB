@@ -63,7 +63,7 @@ Next, we generate the spatial effects:
 
 ```{r}
 library(spam)
-library(mvtnorm)
+# library(mvtnorm)
 kappa<-.99			  	            # Spatial dependence parameter ~ 1 for intrinsic CAR
 cov<-matrix(c(.5,.10,.10,-.10,
               .10,.15,.10,.10,
