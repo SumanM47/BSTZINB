@@ -41,22 +41,22 @@ library(dplyr)
 library(gt)
 library(gtsummary)
 
-IAcities = USAcities %>% filter(state_id=="IA")
-countyname = unique(IAcities$county_name)
-A = get_adj_mat(county.adjacency,countyname,c("IA"))
-m<-apply(A,1,sum)
+IAcities <- USAcities %>% filter(state_id=="IA")
+countyname <- unique(IAcities$county_name)
+A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+m <- apply(A,1,sum)
 ```
 
 Next, we will set some parameters up:
 
 ```{r}
 set.seed(091017)
-n<-nrow(A)			 # Number of spatial units
-nis<-rep(24,n) 	 # Number of individuals per county; here it's balanced -- 24 per county per year
+n <- nrow(A)			 # Number of spatial units
+nis <- rep(24,n) 	 # Number of individuals per county; here it's balanced -- 24 per county per year
 # Note: may need to lower proposal variance, s, below as n_i increases 
-sid<-rep(1:n,nis)
-tid<-rep(1:nis[1],n)
-N<-length(sid) 		# Total number of observations
+sid <- rep(1:n,nis)
+tid <- rep(1:nis[1],n)
+N <- length(sid) 		# Total number of observations
 ```
 
 Next, we generate the spatial effects:
@@ -64,38 +64,38 @@ Next, we generate the spatial effects:
 ```{r}
 library(spam)
 # library(mvtnorm)
-kappa<-.99			  	            # Spatial dependence parameter ~ 1 for intrinsic CAR
-cov<-matrix(c(.5,.10,.10,-.10,
+kappa <- 0.99			  	            # Spatial dependence parameter ~ 1 for intrinsic CAR
+covm <- matrix(c(.5,.10,.10,-.10,
               .10,.15,.10,.10,
               .10,.10,.5,.10,
               -.10,.10,.10,.15),4,4)# Conditional Cov of phi1 and phi2 given phi_{-i} 
-Q<-as.spam(diag(m)-kappa*A)			     
-covphi<-solve(Q)%x%cov			        # 3n x 3n covariance of phis
-phi<-rmvnorm(1,sigma=covphi)		    # 3n vector of spatial effects
-phitmp<-matrix(phi,ncol=4,byrow=T)  # n x 3 matrix of spatial effects
+Q <- as.spam(diag(m)-kappa*A)			     
+covphi <- solve(Q)%x%covm			        # 3n x 3n covariance of phis
+phi <- rmvnorm(1,sigma=covphi)		    # 3n vector of spatial effects
+phitmp <- matrix(phi,ncol=4,byrow=T)  # n x 3 matrix of spatial effects
 
-true.phi1<-phi1<-phitmp[,1]-mean(phitmp[,1])   # n x 1 phi1 vector -- Centered
-true.phi2<-phi2<-phitmp[,2]-mean(phitmp[,2])   # n x 1 phi2 vector, etc.
-true.phi3<-phi3<-phitmp[,3]-mean(phitmp[,3])
-true.phi4<-phi4<-phitmp[,4]-mean(phitmp[,4])
-Phi1<-rep(phi1,nis)
-Phi2<-rep(phi2,nis)
-Phi3<-rep(phi3,nis)
-Phi4<-rep(phi4,nis)
-true.phi<-cbind(true.phi1,true.phi2,true.phi3,true.phi4)
+true.phi1 <- phi1 <- phitmp[,1]-mean(phitmp[,1])   # n x 1 phi1 vector -- Centered
+true.phi2 <- phi2 <- phitmp[,2]-mean(phitmp[,2])   # n x 1 phi2 vector, etc.
+true.phi3 <- phi3 <- phitmp[,3]-mean(phitmp[,3])
+true.phi4 <- phi4 <- phitmp[,4]-mean(phitmp[,4])
+Phi1 <- rep(phi1,nis)
+Phi2 <- rep(phi2,nis)
+Phi3 <- rep(phi3,nis)
+Phi4 <- rep(phi4,nis)
+true.phi <- cbind(true.phi1,true.phi2,true.phi3,true.phi4)
 ```
 
 Followed by the fixed effects and the covariates `X`:
 
 ```{r}
 library(boot)
-tpop = USAcities %>% filter(state_id=="IA") %>% group_by(county_fips) %>% summarise(tpop=population) %>% .[,2] %>% unlist %>% as.numeric
-x = rep(log(tpop),nis)
-x = (x-mean(x))/sd(x)
+tpop <- USAcities %>% filter(state_id=="IA") %>% group_by(county_fips) %>% summarise(tpop=population) %>% .[,2] %>% unlist %>% as.numeric
+x <- rep(log(tpop),nis)
+x <- (x-mean(x))/sd(x)
 # set.seed(2023); x = rnorm(N)
 t <- tid / max(tid)
-X <-cbind(1,x)                       # Design matrix, can add additional covariates (e.g., race, age, gender)
-Xtilde <-cbind(1,x,sin(t))
+X <- cbind(1,x)                       # Design matrix, can add additional covariates (e.g., race, age, gender)
+Xtilde <- cbind(1,x,sin(t))
 p <- ncol(Xtilde)
 ```
 
@@ -103,33 +103,33 @@ p <- ncol(Xtilde)
 Next, we set up the binomial and the count parts of the data:
 ```{r}
 # Binomial part
-true.alpha<-rep(0.1,p)
-true.alpha[1:2]<-c(-0.25,0.25)
+true.alpha <- rep(0.1,p)
+true.alpha[1:2] <- c(-0.25,0.25)
 # true.alpha <- c(-0.25,0.25,-0.5,0.25)
-eta1<-Xtilde%*%true.alpha+Phi1+Phi2*t
-pii<-inv.logit(eta1)        # 1-pr("structural zero")
-u<-rbinom(N,1,pii)          # at-risk indicator
-N1<-sum(u)          
-pstruct0<-1-mean(u)         # Proportion of structural zeros
+eta1 <- Xtilde%*%true.alpha+Phi1+Phi2*t
+pii <- inv.logit(eta1)        # 1-pr("structural zero")
+u <- rbinom(N,1,pii)          # at-risk indicator
+N1 <- sum(u)          
+pstruct0 <- 1-mean(u)         # Proportion of structural zeros
 
 # Count Part 
 true.beta <- rep(0.1,p)
-true.beta[1:2]<-c(.5,-.25)
-tmp<-u
-tmp[u==0]<-0                       # If in structural group then set tmp to 0
-nis1<-tapply(tmp,sid,sum)          # Number of at risk observations in each county
+true.beta[1:2] <- c(.5,-.25)
+tmp <- u
+tmp[u==0] <- 0                       # If in structural group then set tmp to 0
+nis1 <- tapply(tmp,sid,sum)          # Number of at risk observations in each county
 
-eta2<-Xtilde[u==1,]%*%true.beta+Phi3[u==1]+Phi4[u==1]*t[u==1] # Linear predictor for count part
-true.r<-1.25                       # NB dispersion 
-psi<-exp(eta2)/(1+exp(eta2))       # Prob of success
-mu<-true.r*psi/(1-psi)             # NB mean
+eta2 <- Xtilde[u==1,]%*%true.beta+Phi3[u==1]+Phi4[u==1]*t[u==1] # Linear predictor for count part
+true.r <- 1.25                       # NB dispersion 
+psi <- exp(eta2)/(1+exp(eta2))       # Prob of success
+mu <- true.r*psi/(1-psi)             # NB mean
 ```
 
 Finally, we generate the data `y` and make it into a data frame.
 ```{r}
-y<-rep(0,N)                           # Response
-y[u==1]<-rnbinom(N1,size=true.r,mu=mu)# If at risk, draw from NB
-pzero<-length(y[y==0])/N             # Proportion of zeros
+y <- rep(0,N)                           # Response
+y[u==1] <- rnbinom(N1,size=true.r,mu=mu)# If at risk, draw from NB
+pzero <- length(y[y==0])/N             # Proportion of zeros
 # pzero
 # pstruct0/pzero
 # table(y)
@@ -161,7 +161,7 @@ We can additionally make histograms and spaghetti plots and Moran's I:
 
 ```{r}
 # blue histogram
-tmp<-table(y)/N*100  # convert to %s (divide by N multiply by 100)
+tmp <- table(y)/N*100  # convert to %s (divide by N multiply by 100)
 par(mar=c(3,3,1,1))
 barplot(tmp, ylab="Percent",xlab="Count",col="lightblue")
 
@@ -173,7 +173,7 @@ Spaghetti.Plot(Dataset = this_dat, Outcome = y, Id=sid, Time = tid)
 # Moran's I
 library(ape)
 library(reshape)
-this_dat2 = cast(this_dat,sid~tid,sum,value="y")
+this_dat2 <- cast(this_dat,sid~tid,sum,value="y")
 Moran.I(rowMeans(this_dat2),A)
 this_dat2 %>% apply(2,function(w) Moran.I(w,A)) %>% lapply(function(list) list$p.value) %>% unlist
 Moran.I(rowMeans(this_dat2),A)
@@ -211,10 +211,10 @@ USDmapCount(state.sel = c("IA"),
 Now, we shall apply the different models on this data. We'll start by fitting the Bayesian Spatiotemporal Poisson (BSTP) model using the functions `BNB` and `BZINB`:
 
 ```{r}
-res0 = BNB(y, X, A, nchain=3, niter=100, nburn=20)
+res0 <- BNB(y, X, A, nchain=3, niter=100, nburn=20)
 glimpse(res0)
 
-res1 = BZINB(y, X, A, nchain=3, niter=100, nburn=20)
+res1 <- BZINB(y, X, A, nchain=3, niter=100, nburn=20)
 glimpse(res1)
 
 
@@ -225,14 +225,14 @@ apply(res1$Beta,2,mean)
 Next will be the Bayesian Spatiotemporal Negative Binomial (BSTNB) model using the function `BSTNB`:
 
 ```{r}
-res2 = BSTNB(y, X, A, nchain=3, niter=100, nburn=20)
+res2 <- BSTNB(y, X, A, nchain=3, niter=100, nburn=20)
 glimpse(res2)
 ```
 
 Followed by a Bayesian Spatiotemporal Zero Inflated Negative Binomial (BSTZINB) model with linear temporal trend using the `BSTZINB` function with option `LinearT` set to `TRUE`. We can check the convergence of different parameters for this model using the `conv.test` function supplied with the package. DIC can also be computed using the supplied `compute_ZINB_DIC` function.
 
 ```{r,fig.width=6,fig.height=3,fig.align='center'}
-res3 = BSTZINB(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
+res3 <- BSTZINB(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
 glimpse(res3)
 
 
@@ -256,7 +256,7 @@ compute_ZINB_DIC(y,res3,dim(res3$Beta)[1],3)
 And, another BSTZINB model but with spline fitted non-linear temporal trend is fitted below by switching the `LinearT` to `FALSE`. Corresponding convergence tests, plots and DIC computation are also presented. We can compare the two DICs to pick the best fit model.
 
 ```{r,fig.width=6,fig.height=3,fig.align='center'}
-res4 = BSTZINB(y, X, A, LinearT=FALSE, nchain=3, niter=100, nburn=20)
+res4 <- BSTZINB(y, X, A, LinearT=FALSE, nchain=3, niter=100, nburn=20)
 glimpse(res4)
 
 ## Convergence tests
@@ -305,8 +305,8 @@ Next, we visualize random and fixed effects of Eta:
 ```{r}
 # Map Visualization : Spatio-temporal Random Effect of Eta 
 this_result_dat <- this_dat
-Phi1<-rep(apply(res4$PHI1,2,mean),nis)
-Phi2<-rep(apply(res4$PHI2,2,mean),nis)
+Phi1 <- rep(apply(res4$PHI1,2,mean),nis)
+Phi2 <- rep(apply(res4$PHI2,2,mean),nis)
 tt <- this_dat$tid / max(this_dat$tid)
 this_result_dat$y <- Phi1+Phi2*tt
 USDmapCount(state.sel = c("IA"),
@@ -317,8 +317,8 @@ USDmapCount(state.sel = c("IA"),
 
 # Map Visualization : Temporal Fixed Effect of Eta 
 this_result_dat <- this_dat
-Phi1<-rep(apply(res4$PHI1,2,mean),nis)
-Phi2<-rep(apply(res4$PHI2,2,mean),nis)
+Phi1 <- rep(apply(res4$PHI1,2,mean),nis)
+Phi2 <- rep(apply(res4$PHI2,2,mean),nis)
 tt <- this_dat$tid / max(this_dat$tid)
 this_result_dat$y <- apply(res4$Eta1,2,mean) - Phi1+Phi2*tt
 USDmapCount(state.sel = c("IA"),
