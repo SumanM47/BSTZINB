@@ -28,3 +28,16 @@ time-trend curves
 \description{
 Produce a time-trend curve over the study time domain for counties in the US
 }
+\examples{
+data(simdat)
+y <- simdat$y
+X <- cbind(simdat$V1,simdat$x)
+data(county.adjacency)
+data(USAcities)
+IAcities <- subset(USAcities,state_id=="IA")
+countyname <- unique(IAcities$county_name)
+A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+res3 <- BSTZINB(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
+TimetrendCurve(res3,cname=countyname,vn=5,smooth.mode=TRUE,cex.title=18, cex.lab=12, cex.legend=12)
+
+}

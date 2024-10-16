@@ -19,3 +19,11 @@ the corresponding adjacency matrix
 \description{
 Creates the adjacency matrix for the supplied counties within the United States using the available neighborhood information
 }
+\examples{
+data(county.adjacency)
+data(USAcities)
+IAcities <- subset(USAcities,state_id=="IA")
+countyname <- unique(IAcities$county_name)
+A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+
+}

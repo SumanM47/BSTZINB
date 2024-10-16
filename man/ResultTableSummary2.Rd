@@ -30,3 +30,16 @@ summary tables for the different methods
 \description{
 Fits BSTP, BSTNB and BSTZINB (with linear or non-linear temporal trend) to a given data and summarizes the results in a table
 }
+\examples{
+data(simdat)
+y <- simdat$y
+X <- cbind(simdat$V1,simdat$x)
+data(county.adjacency)
+data(USAcities)
+IAcities <- subset(USAcities,state_id=="IA")
+countyname <- unique(IAcities$county_name)
+A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+## Not Run
+# ResultTableSummary2(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
+
+}

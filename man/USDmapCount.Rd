@@ -27,3 +27,12 @@ spatial map of the required quantity over the specified region
 \description{
 Creates a map of any given quantity (at a selected time or averaged over time) for regions in the US specified by state and county
 }
+\examples{
+data(simdat)
+data(county.adjacency)
+data(USAcities)
+IAcities <- subset(USAcities,state_id=="IA")
+countyname <- unique(IAcities$county_name)
+USDmapCount(state.sel="IA",dat=simdat,scol=1,tcol=2,tsel=150,cname=countyname)
+
+}

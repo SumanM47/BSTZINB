@@ -10,8 +10,15 @@
 #' @param Countyvec character vector containing the names of the counties for which the adjacency matrix is to be computed
 #' @param Statevec character vector containing the names of the states the supplied counties belong to
 #'
-#'
 #' @return the corresponding adjacency matrix
+#'
+#' @examples
+#' data(county.adjacency)
+#' data(USAcities)
+#' IAcities <- subset(USAcities,state_id=="IA")
+#' countyname <- unique(IAcities$county_name)
+#' A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+#'
 #' @export
 get_adj_mat <- function(county.adjacency,Countyvec,Statevec){
   if(!is.data.frame(county.adjacency)){stop("county.adjacency must be a data frame")}
@@ -54,10 +61,24 @@ get_adj_mat <- function(county.adjacency,Countyvec,Statevec){
 #'
 #' @param bstfit fitted object using the function BSTP, BSTNB or BSTZINB
 #'
+#'
 #' @import dplyr
 #' @import gtsummary
 #'
 #' @return summary table
+#'
+#' @examples
+#' data(simdat)
+#' y <- simdat$y
+#' X <- cbind(simdat$V1,simdat$x)
+#' data(county.adjacency)
+#' data(USAcities)
+#' IAcities <- subset(USAcities,state_id=="IA")
+#' countyname <- unique(IAcities$county_name)
+#' A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+#' res3 <- BSTZINB(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
+#' ResultTableSummary(res3)
+#'
 #' @export
 ResultTableSummary <- function(bstfit){
   if(is.null(bstfit$Beta)){stop("bstfit must have a named component Beta")}
@@ -123,6 +144,19 @@ ResultTableSummary <- function(bstfit){
 #'
 #'
 #' @return summary tables for the different methods
+#'
+#' @examples
+#' data(simdat)
+#' y <- simdat$y
+#' X <- cbind(simdat$V1,simdat$x)
+#' data(county.adjacency)
+#' data(USAcities)
+#' IAcities <- subset(USAcities,state_id=="IA")
+#' countyname <- unique(IAcities$county_name)
+#' A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+#' ## Not Run
+#' # ResultTableSummary2(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
+#'
 #' @export
 ResultTableSummary2 <- function(y, X, A, LinearT=FALSE, nchain=3, niter=100, nburn=20, nthin=1){
 
@@ -143,7 +177,6 @@ ResultTableSummary2 <- function(y, X, A, LinearT=FALSE, nchain=3, niter=100, nbu
   alphamat <- apply(stfit4$Alpha,c(1,2),mean)
   betamat <- apply(stfit4$Beta,c(1,2),mean)
   temp4 <- data.frame(matrix(NA,nrow(alphamat),ncol(alphamat)+ncol(betamat)+2))
-  # colnames(temp4) <- c(paste0("a",(c(1:ncol(alphamat))-1)),paste0("b",(c(1:ncol(betamat))-1)))
   colnames(temp4) <- c("a.t",paste("a",colnames(alphamat),sep="."),"b.t",paste("b",colnames(betamat),sep="."))
   temp4[,paste("a",colnames(alphamat),sep=".")] <- alphamat
   temp4[,paste("b",colnames(betamat),sep=".")]  <- betamat
@@ -152,17 +185,6 @@ ResultTableSummary2 <- function(y, X, A, LinearT=FALSE, nchain=3, niter=100, nbu
   ind4[paste("a",colnames(alphamat),sep=".")] <- conv.test(stfit4$Alpha)
   ind4[paste("b",colnames(betamat),sep=".")] <- conv.test(stfit4$Beta)
 
-  # stfit3 = BSTZINB(y, X, A, oind, LinearT=TRUE, nchain, niter, nburn, nthin)
-  # alphamat = apply(stfit3$Alpha,c(1,2),mean)
-  # betamat  = apply(stfit3$Beta,c(1,2),mean)
-  # temp3 <- data.frame(matrix(NA,nrow(temp4),ncol(temp4)))
-  # colnames(temp3) <- colnames(temp4)
-  # temp3[,paste("a",colnames(alphamat),sep=".")] <- alphamat
-  # temp3[,paste("b",colnames(betamat),sep=".")]  <- betamat
-  # DIC3 = compute_ZINB_DIC(y,stfit3,(niter-nburn)/nthin,nchain)
-  # ind3 = rep(NA,length(ind4)); names(ind3) <- names(ind4)
-  # ind3[paste("a",colnames(alphamat),sep=".")] <- conv.test(stfit3$Alpha)
-  # ind3[paste("b",colnames(betamat),sep=".")] <- conv.test(stfit3$Beta)
 
   stfit3 <- BSTNB(y, X, A, nchain, niter, nburn, nthin)
   betamat  <- apply(stfit3$Beta,c(1,2),mean)
@@ -271,6 +293,19 @@ ResultTableSummary2 <- function(y, X, A, LinearT=FALSE, nchain=3, niter=100, nbu
 #' @import boot
 #'
 #' @return DIC value
+#'
+#' @examples
+#' data(simdat)
+#' y <- simdat$y
+#' X <- cbind(simdat$V1,simdat$x)
+#' data(county.adjacency)
+#' data(USAcities)
+#' IAcities <- subset(USAcities,state_id=="IA")
+#' countyname <- unique(IAcities$county_name)
+#' A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+#' res3 <- BSTZINB(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
+#' compute_ZINB_DIC(y,res3,lastit=(100-20)/1,nchain=3)
+#'
 #' @export
 compute_ZINB_DIC <- function(y,bstfit,lastit,nchain){
 
@@ -294,7 +329,6 @@ compute_ZINB_DIC <- function(y,bstfit,lastit,nchain){
     dNB <- dnbinom(y[I==1],r.mean,q[I==1],log=T)
     comp1 <- log(1-pii[I==0])
     comp2 <- (log(pii[I==1])+dNB)
-    # (-2)*(sum(comp1)+sum(comp2))
     return((-2)*sum(comp2))
   }
   computeD.indiv <- function(y,bstfit,iter,chain){
@@ -307,7 +341,6 @@ compute_ZINB_DIC <- function(y,bstfit,lastit,nchain){
     dNB <- dnbinom(y[I==1],r,q[I==1],log=T)
     comp1 <- log(1-pii[I==0])
     comp2 <- (log(pii[I==1])+dNB)
-    # (-2)*(sum(comp1)+sum(comp2))
     return((-2)*sum(comp2))
   }
   Dmat <- matrix(0,lastit,nchain)
@@ -323,15 +356,15 @@ compute_ZINB_DIC <- function(y,bstfit,lastit,nchain){
   return(DIC)
 }
 
-#' @title DIC for BSTNB or BSTP fitted objects
+#' @title DIC for BSTNB or BNB fitted objects
 #'
 #' @description
-#' Computes DIC for a BSTNB or BSTP fitted object
+#' Computes DIC for a BSTNB or BNB fitted object
 #'
 #' @usage compute_NB_DIC(y,bstfit,lastit,nchain)
 #'
 #' @param y vector of counts, must be non-negative, the response used for fitting a BSTNB or BSTP model
-#' @param bstfit BSTNB or BSTP fitted object
+#' @param bstfit BSTNB or BNB fitted object
 #' @param lastit positive integer, size of the chain used to fit BSTZINB
 #' @param nchain positive integer, number of chains used to fit BSTZINB
 #'
@@ -346,6 +379,19 @@ compute_ZINB_DIC <- function(y,bstfit,lastit,nchain){
 #' @importFrom stats var
 #'
 #' @return DIC value
+#'
+#' @examples
+#' data(simdat)
+#' y <- simdat$y
+#' X <- cbind(simdat$V1,simdat$x)
+#' data(county.adjacency)
+#' data(USAcities)
+#' IAcities <- subset(USAcities,state_id=="IA")
+#' countyname <- unique(IAcities$county_name)
+#' A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+#' res2 <- BSTNB(y, X, A, nchain=3, niter=100, nburn=20, nthin=1)
+#' compute_NB_DIC(y,res2,lastit=(100-20)/1,nchain=3)
+#'
 #' @export
 compute_NB_DIC <- function(y,bstfit,lastit,nchain){
 
@@ -400,6 +446,19 @@ compute_NB_DIC <- function(y,bstfit,lastit,nchain){
 #' @import coda
 #'
 #' @return logical vector indicating whether convergence was achieved or not
+#'
+#' @examples
+#' data(simdat)
+#' y <- simdat$y
+#' X <- cbind(simdat$V1,simdat$x)
+#' data(county.adjacency)
+#' data(USAcities)
+#' IAcities <- subset(USAcities,state_id=="IA")
+#' countyname <- unique(IAcities$county_name)
+#' A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+#' res3 <- BSTZINB(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
+#' conv.test(res3$Alpha,nchain=3)
+#'
 #' @export
 conv.test <- function(params,nchain=3,thshold=1.96){
 

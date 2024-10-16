@@ -16,10 +16,12 @@ knitr::opts_chunk$set(
 )
 ```
 
-Install the R package from GitHub using `devtools` package in R. If you do not have `devtools` installed in your system, please install `devtools` first. See [their website](https://cran.r-project.org/web/packages/devtools/readme/README.html) for details on installing `devtools`. Once you have devtools installed in your system, use the following in R to install the R package `BSTZINB` in your system:
+<!-- Install the R package from GitHub using `devtools` package in R. If you do not have `devtools` installed in your system, please install `devtools` first. See [their website](https://cran.r-project.org/web/packages/devtools/readme/README.html) for details on installing `devtools`. Once you have devtools installed in your system, use the following in R to install the R package `BSTZINB` in your system: -->
+
+Install the R-package from CRAN using the `install.packages` function:
 
 ```{r, eval=FALSE}
-devtools::install_github("SumanM47/BSTZINB", force=TRUE)
+install.packages('BSTZINB')
 ```
 
 Load the R package using the `library()` function in R as below:

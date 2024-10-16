@@ -2,14 +2,14 @@
 % Please edit documentation in R/aux_func.R
 \name{compute_NB_DIC}
 \alias{compute_NB_DIC}
-\title{DIC for BSTNB or BSTP fitted objects}
+\title{DIC for BSTNB or BNB fitted objects}
 \usage{
 compute_NB_DIC(y,bstfit,lastit,nchain)
 }
 \arguments{
 \item{y}{vector of counts, must be non-negative, the response used for fitting a BSTNB or BSTP model}
 
-\item{bstfit}{BSTNB or BSTP fitted object}
+\item{bstfit}{BSTNB or BNB fitted object}
 
 \item{lastit}{positive integer, size of the chain used to fit BSTZINB}
 
@@ -19,5 +19,18 @@ compute_NB_DIC(y,bstfit,lastit,nchain)
 DIC value
 }
 \description{
-Computes DIC for a BSTNB or BSTP fitted object
+Computes DIC for a BSTNB or BNB fitted object
+}
+\examples{
+data(simdat)
+y <- simdat$y
+X <- cbind(simdat$V1,simdat$x)
+data(county.adjacency)
+data(USAcities)
+IAcities <- subset(USAcities,state_id=="IA")
+countyname <- unique(IAcities$county_name)
+A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+res2 <- BSTNB(y, X, A, nchain=3, niter=100, nburn=20, nthin=1)
+compute_NB_DIC(y,res2,lastit=(100-20)/1,nchain=3)
+
 }

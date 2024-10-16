@@ -28,3 +28,18 @@ bar graph
 \description{
 Produce a descending order of bar plot for time-averaged log-q estimates over quantile-representative counties
 }
+\examples{
+data(simdat)
+y <- simdat$y
+X <- cbind(simdat$V1,simdat$x)
+data(county.adjacency)
+data(USAcities)
+IAcities <- subset(USAcities,state_id=="IA")
+countyname <- unique(IAcities$county_name)
+A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+res3 <- BSTZINB(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
+qRankPar(state.set=c("IA"),cname=countyname,bstfit=res3,vn=12,
+         cex.title=18, cex.lab=12, cex.legend=12)
+
+
+}

@@ -3,8 +3,8 @@ Type: Package
 Title: Estimates association between COVID-19 death counts and socail and environmental risk factors
 Version: 0.1.0
 Authors@R: c(
-    person("Suman","Majumder",email="smajumd2@gmail.com",role=c("cre","aut")),
-    person("Yoon-Bae","Jun",role="aut")
+    person("Suman","Majumder",email="smajumd2@gmail.com",role=c("cre","aut","cph")),
+    person("Yoon-Bae","Jun",role=c("aut","cph"))
     )
 Description: This package contains functions to estimate association between COVID-19 death counts and social and environmental risk factos using a Bayesian spatiotemporal model. Function to produce corresponding maps are also included.
 License: GPL (>=3)
