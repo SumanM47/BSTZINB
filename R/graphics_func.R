@@ -130,10 +130,11 @@ USDmapCount <- function(state.sel,dat,scol,tcol=NULL,tsel=NULL,cname,uplim=NULL)
 #' IAcities <- subset(USAcities,state_id=="IA")
 #' countyname <- unique(IAcities$county_name)
 #' A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+#' \donttest{
 #' res3 <- BSTZINB(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
 #' qRankPar(state.set=c("IA"),cname=countyname,bstfit=res3,vn=12,
 #'          cex.title=18, cex.lab=12, cex.legend=12)
-#'
+#' }
 #'
 #' @export
 qRankPar <- function(state.set,cname,bstfit,vn=12,
@@ -209,9 +210,11 @@ qRankPar <- function(state.set,cname,bstfit,vn=12,
 #' IAcities <- subset(USAcities,state_id=="IA")
 #' countyname <- unique(IAcities$county_name)
 #' A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+#' \donttest{
 #' res3 <- BSTZINB(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
 #' qRankParTop(state.set=c("IA"),cname=countyname,bstfit=res3,vn=12,
 #'              cex.title=18, cex.lab=12, cex.legend=12)
+#' }
 #'
 #' @export
 qRankParTop <- function(state.set,cname,bstfit,vn=12,
@@ -291,8 +294,10 @@ qRankParTop <- function(state.set,cname,bstfit,vn=12,
 #' IAcities <- subset(USAcities,state_id=="IA")
 #' countyname <- unique(IAcities$county_name)
 #' A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+#' \donttest{
 #' res3 <- BSTZINB(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
 #' TimetrendCurve(res3,cname=countyname,vn=5,smooth.mode=TRUE,cex.title=18, cex.lab=12, cex.legend=12)
+#' }
 #'
 #' @export
 TimetrendCurve <- function(bstfit,cname,vn=5,smooth.mode=TRUE,

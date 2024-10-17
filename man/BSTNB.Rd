@@ -37,6 +37,8 @@ data(USAcities)
 IAcities <- subset(USAcities,state_id=="IA")
 countyname <- unique(IAcities$county_name)
 A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+\donttest{
 res2 <- BSTNB(y, X, A, nchain=3, niter=100, nburn=20, nthin=1)
+}
 
 }

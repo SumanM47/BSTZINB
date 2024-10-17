@@ -39,7 +39,9 @@
 #' IAcities <- subset(USAcities,state_id=="IA")
 #' countyname <- unique(IAcities$county_name)
 #' A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+#' \donttest{
 #' res1 <- BSTZINB(y, X, A, nchain=3, niter=100, nburn=20, nthin=1)
+#' }
 #'
 #' @export
 BZINB <- function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){

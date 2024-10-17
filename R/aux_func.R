@@ -76,8 +76,10 @@ get_adj_mat <- function(county.adjacency,Countyvec,Statevec){
 #' IAcities <- subset(USAcities,state_id=="IA")
 #' countyname <- unique(IAcities$county_name)
 #' A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+#' \donttest{
 #' res3 <- BSTZINB(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
 #' ResultTableSummary(res3)
+#' }
 #'
 #' @export
 ResultTableSummary <- function(bstfit){
@@ -154,9 +156,9 @@ ResultTableSummary <- function(bstfit){
 #' IAcities <- subset(USAcities,state_id=="IA")
 #' countyname <- unique(IAcities$county_name)
 #' A <- get_adj_mat(county.adjacency,countyname,c("IA"))
-#' ## Not Run
-#' # ResultTableSummary2(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
-#'
+#' \donttest{
+#' ResultTableSummary2(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
+#' }
 #' @export
 ResultTableSummary2 <- function(y, X, A, LinearT=FALSE, nchain=3, niter=100, nburn=20, nthin=1){
 
@@ -303,8 +305,10 @@ ResultTableSummary2 <- function(y, X, A, LinearT=FALSE, nchain=3, niter=100, nbu
 #' IAcities <- subset(USAcities,state_id=="IA")
 #' countyname <- unique(IAcities$county_name)
 #' A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+#' \donttest{
 #' res3 <- BSTZINB(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
 #' compute_ZINB_DIC(y,res3,lastit=(100-20)/1,nchain=3)
+#' }
 #'
 #' @export
 compute_ZINB_DIC <- function(y,bstfit,lastit,nchain){
@@ -389,8 +393,10 @@ compute_ZINB_DIC <- function(y,bstfit,lastit,nchain){
 #' IAcities <- subset(USAcities,state_id=="IA")
 #' countyname <- unique(IAcities$county_name)
 #' A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+#' \donttest{
 #' res2 <- BSTNB(y, X, A, nchain=3, niter=100, nburn=20, nthin=1)
 #' compute_NB_DIC(y,res2,lastit=(100-20)/1,nchain=3)
+#' }
 #'
 #' @export
 compute_NB_DIC <- function(y,bstfit,lastit,nchain){
@@ -456,8 +462,10 @@ compute_NB_DIC <- function(y,bstfit,lastit,nchain){
 #' IAcities <- subset(USAcities,state_id=="IA")
 #' countyname <- unique(IAcities$county_name)
 #' A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+#' \donttest{
 #' res3 <- BSTZINB(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
 #' conv.test(res3$Alpha,nchain=3)
+#' }
 #'
 #' @export
 conv.test <- function(params,nchain=3,thshold=1.96){
