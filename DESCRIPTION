@@ -1,12 +1,12 @@
 Package: BSTZINB
 Type: Package
-Title: Estimates association between COVID-19 death counts and socail and environmental risk factors
+Title: Estimates Association Between COVID-19 Death Counts and Social and Environmental Risk Factors
 Version: 0.1.0
 Authors@R: c(
     person("Suman","Majumder",email="smajumd2@gmail.com",role=c("cre","aut","cph")),
     person("Yoon-Bae","Jun",role=c("aut","cph"))
     )
-Description: Estimation of association between COVID-19 death counts and social and environmental risk factos using a zero-inflated Bayesian spatiotemporal model. Non-spatiotemporal models and/or models without zero-inflation are also included for comparison. Functions to produce corresponding maps are also included. See Chakraborty et al. (2022) <doi:https://doi.org/10.1007/s13253-022-00487-1> for more details on the method.
+Description: Estimation of association between COVID-19 death counts and social and environmental risk factos using a zero-inflated Bayesian spatiotemporal model. Non-spatiotemporal models and/or models without zero-inflation are also included for comparison. Functions to produce corresponding maps are also included. See Chakraborty et al. (2022) <doi:10.1007/s13253-022-00487-1> for more details on the method.
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
