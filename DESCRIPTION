@@ -1,7 +1,7 @@
 Package: BSTZINB
 Type: Package
 Title: Estimates Association Between COVID-19 Death Counts and Social and Environmental Risk Factors
-Version: 0.1.0
+Version: 1.0.0
 Authors@R: c(
     person("Suman","Majumder",email="smajumd2@gmail.com",role=c("cre","aut","cph")),
     person("Yoon-Bae","Jun",role=c("aut","cph"))
