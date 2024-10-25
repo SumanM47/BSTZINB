@@ -48,7 +48,7 @@
       [1] "1 / 3 chain |  70 % completed | Test: FALSE"
       [1] "1 / 3 chain |  80 % completed | Test: TRUE"
       [1] "1 / 3 chain |  90 % completed | Test: TRUE"
-      [1] "1 / 3 chain |  100 % completed | Test: FALSE"
+      [1] "1 / 3 chain |  100 % completed | Test: TRUE"
       [1] "2 / 3 chain |  10 % completed | Test: NA"
       [1] "2 / 3 chain |  20 % completed | Test: NA"
       [1] "2 / 3 chain |  30 % completed | Test: FALSE"
@@ -58,7 +58,7 @@
       [1] "2 / 3 chain |  70 % completed | Test: FALSE"
       [1] "2 / 3 chain |  80 % completed | Test: TRUE"
       [1] "2 / 3 chain |  90 % completed | Test: TRUE"
-      [1] "2 / 3 chain |  100 % completed | Test: FALSE"
+      [1] "2 / 3 chain |  100 % completed | Test: TRUE"
       [1] "3 / 3 chain |  10 % completed | Test: NA"
       [1] "3 / 3 chain |  20 % completed | Test: NA"
       [1] "3 / 3 chain |  30 % completed | Test: FALSE"
@@ -68,7 +68,7 @@
       [1] "3 / 3 chain |  70 % completed | Test: FALSE"
       [1] "3 / 3 chain |  80 % completed | Test: TRUE"
       [1] "3 / 3 chain |  90 % completed | Test: TRUE"
-      [1] "3 / 3 chain |  100 % completed | Test: TRUE"
+      [1] "3 / 3 chain |  100 % completed | Test: FALSE"
 
 # BSTNB works
 
@@ -121,7 +121,7 @@
       [1] "1 / 3 chain |  70 % completed | Test: FALSE"
       [1] "1 / 3 chain |  80 % completed | Test: TRUE"
       [1] "1 / 3 chain |  90 % completed | Test: TRUE"
-      [1] "1 / 3 chain |  100 % completed | Test: FALSE"
+      [1] "1 / 3 chain |  100 % completed | Test: TRUE"
       [1] "2 / 3 chain |  10 % completed | Test: NA"
       [1] "2 / 3 chain |  20 % completed | Test: NA"
       [1] "2 / 3 chain |  30 % completed | Test: FALSE"
@@ -141,5 +141,5 @@
       [1] "3 / 3 chain |  70 % completed | Test: FALSE"
       [1] "3 / 3 chain |  80 % completed | Test: TRUE"
       [1] "3 / 3 chain |  90 % completed | Test: TRUE"
-      [1] "3 / 3 chain |  100 % completed | Test: TRUE"
+      [1] "3 / 3 chain |  100 % completed | Test: FALSE"
 

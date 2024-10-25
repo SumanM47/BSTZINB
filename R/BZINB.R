@@ -40,7 +40,7 @@
 #' countyname <- unique(IAcities$county_name)
 #' A <- get_adj_mat(county.adjacency,countyname,c("IA"))
 #' \donttest{
-#' res1 <- BSTZINB(y, X, A, nchain=3, niter=100, nburn=20, nthin=1)
+#' res1 <- BSTZINB(y, X, A, nchain=2, niter=100, nburn=20, nthin=1)
 #' }
 #'
 #' @export
@@ -77,10 +77,10 @@ BZINB <- function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
   ############
   Beta <- Alpha <- array(0,c(lastit,p,nchain))
   colnames(Beta) <- colnames(Alpha) <- colnames(X)
-  R <- R2 <- matrix(0,lastit,nchain)
+  R <- matrix(0,lastit,nchain)
   I <- Eta1 <- Eta2 <- array(0,c(lastit,N,nchain))
 
-  for(chain in 1:3){
+  for(chain in 1:nchain){
 
     #########
     # Inits #
@@ -138,14 +138,14 @@ BZINB <- function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
       # Update r2 using Gibbs as in Dadaneh et al and Zhou and Carin #
 
       # Update latent counts, l
-      l <- rep(0,N1)
-      ytmp <- y[y1==1]
-      for(j in 1:N1) l[j] <- sum(rbinom(ytmp[j],1,round(r/(r+1:ytmp[j]-1),6))) # Could try to avoid loop; rounding avoids numerical stability
+      # l <- rep(0,N1)
+      # ytmp <- y[y1==1]
+      # for(j in 1:N1) l[j] <- sum(rbinom(ytmp[j],1,round(r/(r+1:ytmp[j]-1),6))) # Could try to avoid loop; rounding avoids numerical stability
 
       # Update r from conjugate gamma distribution given l and psi
-      eta <- X[y1==1,]%*%beta
-      psi <- exp(eta)/(1+exp(eta))
-      r2 <- rgamma(1,0.01+sum(l),0.01-sum(log(1-psi))) # Gamma(0.01,0.01) prior for r
+      # eta <- X[y1==1,]%*%beta
+      # psi <- exp(eta)/(1+exp(eta))
+      # r2 <- rgamma(1,0.01+sum(l),0.01-sum(log(1-psi))) # Gamma(0.01,0.01) prior for r
 
       # Store
       if (i > nburn & i%%nthin==0) {
@@ -153,7 +153,7 @@ BZINB <- function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
         Alpha[j,,chain] <- alpha
         Beta[j,,chain] <- beta
         R[j,chain] <- r
-        R2[j,chain] <- r2
+        # R2[j,chain] <- r2
         Eta1[j,,chain] <- eta1
         Eta2[j,,chain] <- eta2
         I[j,,chain] <- y1
@@ -163,7 +163,7 @@ BZINB <- function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
     }
   }
 
-  list_params <- list(Alpha=Alpha, Beta=Beta, R=R, R2=R2,
+  list_params <- list(Alpha=Alpha, Beta=Beta, R=R,
                      Eta1=Eta1, Eta2=Eta2, I=I)
 
   return(list_params)

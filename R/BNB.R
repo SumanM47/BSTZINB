@@ -40,7 +40,7 @@
 #' countyname <- unique(IAcities$county_name)
 #' A <- get_adj_mat(county.adjacency,countyname,c("IA"))
 #' \donttest{
-#' res0 <- BNB(y, X, A, nchain=3, niter=100, nburn=20, nthin=1)
+#' res0 <- BNB(y, X, A, nchain=2, niter=100, nburn=20, nthin=1)
 #' }
 #'
 #' @export
@@ -78,10 +78,10 @@ BNB <- function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
   ############
   Beta <- array(0,c(lastit,p,nchain))
   colnames(Beta) <- colnames(X)
-  R <- R2 <- matrix(0,lastit,nchain)
+  R <- matrix(0,lastit,nchain)
   Eta <- array(0,c(lastit,N,nchain))
 
-  for(chain in 1:3){
+  for(chain in 1:nchain){
 
     #########
     # Inits #

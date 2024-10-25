@@ -54,7 +54,7 @@ Next, we will set some parameters up:
 ```{r}
 set.seed(091017)
 n <- nrow(A)			 # Number of spatial units
-nis <- rep(24,n) 	 # Number of individuals per county; here it's balanced -- 24 per county per year
+nis <- rep(16,n) 	 # Number of individuals per county; here it's balanced -- 12 per county per year
 # Note: may need to lower proposal variance, s, below as n_i increases 
 sid <- rep(1:n,nis)
 tid <- rep(1:nis[1],n)
@@ -213,10 +213,10 @@ USDmapCount(state.sel = c("IA"),
 Now, we shall apply the different models on this data. We'll start by fitting the Bayesian Spatiotemporal Poisson (BSTP) model using the functions `BNB` and `BZINB`:
 
 ```{r}
-res0 <- BNB(y, X, A, nchain=3, niter=100, nburn=20)
+res0 <- BNB(y, X, A, nchain=2, niter=100, nburn=20)
 glimpse(res0)
 
-res1 <- BZINB(y, X, A, nchain=3, niter=100, nburn=20)
+res1 <- BZINB(y, X, A, nchain=2, niter=100, nburn=20)
 glimpse(res1)
 
 
@@ -227,14 +227,14 @@ apply(res1$Beta,2,mean)
 Next will be the Bayesian Spatiotemporal Negative Binomial (BSTNB) model using the function `BSTNB`:
 
 ```{r}
-res2 <- BSTNB(y, X, A, nchain=3, niter=100, nburn=20)
+res2 <- BSTNB(y, X, A, nchain=2, niter=100, nburn=20)
 glimpse(res2)
 ```
 
 Followed by a Bayesian Spatiotemporal Zero Inflated Negative Binomial (BSTZINB) model with linear temporal trend using the `BSTZINB` function with option `LinearT` set to `TRUE`. We can check the convergence of different parameters for this model using the `conv.test` function supplied with the package. DIC can also be computed using the supplied `compute_ZINB_DIC` function.
 
 ```{r,fig.width=6,fig.height=3,fig.align='center'}
-res3 <- BSTZINB(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
+res3 <- BSTZINB(y, X, A, LinearT=TRUE, nchain=2, niter=100, nburn=20, nthin=1)
 glimpse(res3)
 
 
@@ -243,22 +243,22 @@ conv.test(res3$Beta) ## Convergence test for Beta parameters
 conv.test(res3$R) ## Convergence test for R parameters
 
 ## Plotting the chains for the parameters
-par(mfrow=c(1,3));plot(res3$R[,1],main="R");plot(res3$R[,2],main="R");plot(res3$R[,3],main="R")
-par(mfrow=c(1,3));plot(res3$Alpha[,1,1],type='o',main="Alpha");plot(res3$Alpha[,1,2],type='o',main="Alpha");plot(res3$Alpha[,1,3],type='o',main="Alpha")
+par(mfrow=c(1,2));plot(res3$R[,1],main="R");plot(res3$R[,2],main="R")
+par(mfrow=c(1,2));plot(res3$Alpha[,1,1],type='o',main="Alpha");plot(res3$Alpha[,1,2],type='o',main="Alpha")
 
 ## Checking the estimated beta with the true beta
 apply(res3$Beta,2,mean)
 true.beta
 
 ## Computing DIC
-compute_ZINB_DIC(y,res3,dim(res3$Beta)[1],3)
+compute_ZINB_DIC(y,res3,dim(res3$Beta)[1],2)
 ```
 
 
 And, another BSTZINB model but with spline fitted non-linear temporal trend is fitted below by switching the `LinearT` to `FALSE`. Corresponding convergence tests, plots and DIC computation are also presented. We can compare the two DICs to pick the best fit model.
 
 ```{r,fig.width=6,fig.height=3,fig.align='center'}
-res4 <- BSTZINB(y, X, A, LinearT=FALSE, nchain=3, niter=100, nburn=20)
+res4 <- BSTZINB(y, X, A, LinearT=FALSE, nchain=2, niter=100, nburn=20)
 glimpse(res4)
 
 ## Convergence tests
@@ -266,15 +266,15 @@ conv.test(res4$Alpha) ## Alpha parameters
 conv.test(res4$Beta) ## Beta parameters
 conv.test(res4$R) ## R parameters
 
-par(mfrow=c(1,3));plot(res4$R[,1],main="R");plot(res4$R[,2],main="R");plot(res4$R[,3],main="R")
-par(mfrow=c(1,3));plot(res4$Alpha[,1,1],type='o',main="Alpha");plot(res4$Alpha[,1,2],type='o',main="Alpha");plot(res4$Alpha[,1,3],type='o',main="Alpha")
+par(mfrow=c(1,3));plot(res4$R[,1],main="R");plot(res4$R[,2],main="R")
+par(mfrow=c(1,3));plot(res4$Alpha[,1,1],type='o',main="Alpha");plot(res4$Alpha[,1,2],type='o',main="Alpha")
 
 ## Posterior means for beta and R
 apply(res4$Beta,2,mean)
 mean(res4$R)
 
 ## DIC
-compute_ZINB_DIC(y,res4,dim(res4$Beta)[1],3)
+compute_ZINB_DIC(y,res4,dim(res4$Beta)[1],2)
 ```
 
 These results may be summarized using the supplied `ResultTableSummary` function. Here we summarize the output of the BSTZINB model with the linear time trend:
@@ -286,7 +286,7 @@ ResultTableSummary(res3)
 A more detailed summary can be obtained by using the function `ResultTableSummary2`. This functions takes the data (`y`, `X`, `A`, `nt`) as input, runs all of the above 4 models, computes DICs and checks convergences, and finally summarizes them:
 
 ```{r}
-ResultTableSummary2(y, X, A, nchain=3, niter=100, nburn=20, nthin=1)
+ResultTableSummary2(y, X, A, nchain=2, niter=100, nburn=20, nthin=1)
 ```
 
 Next, we'll focus on the outputs of these models and visualizing them. First, we'll visualize a time-averaged Eta parameter in the following way:

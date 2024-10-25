@@ -46,7 +46,7 @@
 #' countyname <- unique(IAcities$county_name)
 #' A <- get_adj_mat(county.adjacency,countyname,c("IA"))
 #' \donttest{
-#' res3 <- BSTZINB(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
+#' res3 <- BSTZINB(y, X, A, LinearT=TRUE, nchain=2, niter=100, nburn=20, nthin=1)
 #' }
 #'
 #' @export
@@ -69,7 +69,7 @@ BSTZINB <- function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthi
   N <- length(y)
   n <- nrow(A)			    # Number of spatial units
   nt <- N/n
-  nis <- rep(nt,n) 		# Number of individuals per county; here it's balanced -- 50 per county per year
+  nis <- rep(nt,n) 		# Number of individuals per county; here it's balanced
   # Note: may need to lower proposal variance, s, below as n_i increases
   sid <- rep(1:n,nis)
   tid <- rep(1:nis[1],n)
@@ -82,7 +82,7 @@ BSTZINB <- function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthi
     colnames(Tbs) <- paste0("t",colnames(Tbs))
     Xtilde <- cbind(X,Tbs)
   }
-  p = ncol(Xtilde)
+  p <- ncol(Xtilde)
 
   ##########
   # Priors #
@@ -92,31 +92,31 @@ BSTZINB <- function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthi
   T0b <- diag(.01,p)         # Uniform or Gamma(0.01,0.01) prior for r depending on MH or Gibbs
   s <- 0.0003                # Proposal variance  -- NOTE: may need to lower this as n_i increases
   kappa <- 0.999999
-  Q <- as.spam(diag(apply(A,1,sum)))-kappa*as.spam(A)
+  Q <- as.spam(diag(apply(A,1,sum))) - kappa*as.spam(A)
 
   ############
   # Num Sims #
   ############
-  lastit <- (niter-nburn)/nthin	# Last stored value
+  lastit <- (niter - nburn)/nthin	# Last stored value
 
   ############
   # Store #
   ############
   Beta <- Alpha <- array(0,c(lastit,p,nchain))
   colnames(Beta) <- colnames(Alpha) <- colnames(Xtilde)
-  R <- R2 <- matrix(0,lastit,nchain)
+  R <- matrix(0,lastit,nchain)
   Sigphi <- array(0,c(lastit,16,nchain))
   PHI1 <- PHI2 <- PHI3 <- PHI4 <- array(0,c(lastit,n,nchain))
   I <- Eta1 <- Eta2 <- array(0,c(lastit,N,nchain))
 
-  for(chain in 1:3){
+  for(chain in 1:nchain){
 
     #########
     # Inits #
     #########
 
     set.seed(2023+chain); beta <- alpha <- rnorm(p)
-    phi_init <- spam::rmvnorm(1,sigma=diag(.1,16*n))	  # Random effects
+    phi_init <- rmvnorm(1,sigma=diag(.1,16*n))	  # Random effects
     phi_init <- matrix(phi_init,ncol=16,byrow=T)  # n x 3 matrix of spatial effects
     phi1 <- phi_init[,1]
     phi2 <- phi_init[,2]
@@ -137,8 +137,8 @@ BSTZINB <- function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthi
     r <- 1
     Acc <- 0
     y1 <- rep(0,N)             # At risk indicator (this is W in paper)
-    y1[y>0] <- 1               # If y>0, then at risk w.p. 1
-    N0 <- length(y[y==0])      # Number of observed 0's
+    y1[y > 0] <- 1               # If y>0, then at risk w.p. 1
+    N0 <- length(y[y == 0])      # Number of observed 0's
     q <- rep(.5,N)             # 1-p=1/(1+exp(X%*%alpha)), used for updating y1
 
     ########
@@ -150,17 +150,17 @@ BSTZINB <- function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthi
       # Update alpha
       mu <- Xtilde%*%alpha+Phi1+Phi2*t
       w <- rpg(N,1,mu)
-      z <- (y1-1/2)/w
+      z <- (y1-0.5)/w
       v <- solve(crossprod(sqrt(w)*Xtilde)+T0a)
       m <- v%*%(T0a%*%alpha0+t(sqrt(w)*Xtilde)%*%(sqrt(w)*(z-Phi1-Phi2*t)))
-      alpha <- c(spam::rmvnorm(1,m,v))
+      alpha <- c(rmvnorm(1,m,v))
 
       # Update phi1
       priorprec <- as.numeric(1/(Sigmaphi[1,1]-Sigmaphi[1,-1]%*%solve(Sigmaphi[-1,-1])%*%Sigmaphi[-1,1]))*Q # Prior Prec of phi1|phi2,phi3,phi4
       priormean <- diag(n)%x%(Sigmaphi[1,-1]%*%solve(Sigmaphi[-1,-1]))%*%c(t(phimat[,-1]))      # Prior mean of phi1|phi2,phi3,phi4
       prec <- priorprec+as.spam(diag(tapply(w,sid,sum),n,n))
       m <- c(priorprec%*%priormean)+tapply(w*(z-Xtilde%*%alpha-Phi2*t),sid,sum)
-      if(is.positive.definite(prec%>%as.matrix)) phi1 <- spam::rmvnorm.canonical(1, m, prec)[1,]
+      if(is.positive.definite(prec%>%as.matrix)) phi1 <- rmvnorm.canonical(1, m, prec)[1,]
 
       # Center
       phi1 <- phi1-mean(phi1)
@@ -171,7 +171,7 @@ BSTZINB <- function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthi
       priormean <- diag(n)%x%(Sigmaphi[2,-2]%*%solve(Sigmaphi[-2,-2]))%*%c(t(phimat[,-2]))      # Prior mean of phi2|phi1,phi3,phi4
       prec <- priorprec+as.spam(diag(tapply(w*t^2,sid,sum),n,n))
       m <- c(priorprec%*%priormean)+tapply(t*w*(z-Xtilde%*%alpha-Phi1),sid,sum)
-      if(is.positive.definite(prec%>%as.matrix)) phi2 <- spam::rmvnorm.canonical(1, m, prec)[1,]
+      if(is.positive.definite(prec%>%as.matrix)) phi2 <- rmvnorm.canonical(1, m, prec)[1,]
 
       # Center
       phi2 <- phi2-mean(phi2)
@@ -179,7 +179,7 @@ BSTZINB <- function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthi
 
       # Update r
       rnew <- rtnorm(1,r,sqrt(s),lower=0)       # Treat r as continuous
-      ratio <- sum(dnbinom(y[y1==1],rnew,q[y1==1],log=T))-sum(dnbinom(y[y1==1],r,q[y1==1],log=T))+
+      ratio <- sum(dnbinom(y[y1==1],rnew,q[y1==1],log=T)) - sum(dnbinom(y[y1==1],r,q[y1==1],log=T))+
         dtnorm(r,rnew,sqrt(s),0,log=T) - dtnorm(rnew,r,sqrt(s),0,log=T)   # Uniform Prior for R
       # Proposal not symmetric
       if (log(runif(1)) < ratio) {
@@ -188,8 +188,8 @@ BSTZINB <- function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthi
       }
 
       # Update at-risk indicator y1 (W in paper)
-      eta1 <- Xtilde%*%alpha+Phi1+Phi2*t
-      eta2 <- Xtilde%*%beta+Phi3+Phi4*t              # Use all n observations
+      eta1 <- Xtilde%*%alpha + Phi1 + Phi2*t
+      eta2 <- Xtilde%*%beta + Phi3 + Phi4*t              # Use all n observations
       pii <- pmax(0.01,pmin(0.99,inv.logit(eta1)))  # at-risk probability
       q <- pmax(0.01,pmin(0.99,1/(1+exp(eta2))))                      # Pr(y=0|y1=1)
       theta <- pii*(q^r)/(pii*(q^r)+1-pii)         # Conditional prob that y1=1 given y=0 -- i.e. Pr(chance zero|observed zero)
@@ -198,7 +198,7 @@ BSTZINB <- function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthi
       nis1 <- tapply(y1,sid,sum)
 
       # Update beta
-      eta <- Xtilde[y1==1,]%*%beta+Phi3[y1==1]+Phi4[y1==1]*t[y1==1]
+      eta <- Xtilde[y1==1,]%*%beta + Phi3[y1==1] + Phi4[y1==1]*t[y1==1]
       w <- rpg(N1,y[y1==1]+r,eta)                               # Polya weights
       z <- (y[y1==1]-r)/(2*w)
       v <- solve(crossprod(Xtilde[y1==1,]*sqrt(w))+T0b)
@@ -214,7 +214,7 @@ BSTZINB <- function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthi
       tmp <- rep(0,n)                       # Account empty blocks
       tmp[nis1>0] <- tapply(w*(z-Xtilde[y1==1,]%*%beta-Phi4[y1==1]*t[y1==1]),sid[y1==1],sum)
       m <- c(priorprec%*%priormean)+tmp
-      if(is.positive.definite(prec%>%as.matrix)) phi3 <- spam::rmvnorm.canonical(1, m, prec)[1,]
+      if(is.positive.definite(prec%>%as.matrix)) phi3 <- rmvnorm.canonical(1, m, prec)[1,]
 
       # Center
       phi3 <- phi3-mean(phi3)
@@ -228,7 +228,7 @@ BSTZINB <- function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthi
       tmp <- rep(0,n)                       # Account for empty counties
       tmp[nis1>0] <- tapply(t[y1==1]*w*(z-Xtilde[y1==1,]%*%beta-Phi3[y1==1]),sid[y1==1],sum)
       m <- c(priorprec%*%priormean)+tmp
-      if(is.positive.definite(prec%>%as.matrix)) phi4 <- spam::rmvnorm.canonical(1, m, prec)[1,]
+      if(is.positive.definite(prec%>%as.matrix)) phi4 <- rmvnorm.canonical(1, m, prec)[1,]
 
       # Center
       phi4 <- phi4-mean(phi4)
@@ -236,13 +236,13 @@ BSTZINB <- function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthi
 
       # Update r2 using Gibbs as in Dadaneh et al and Zhou and Carin
       # Update latent counts, l
-      l <- rep(0,N1)
-      ytmp <- y[y1==1]
-      for(j in 1:N1) l[j] <- sum(rbinom(ytmp[j],1,round(r/(r+1:ytmp[j]-1),6))) # Could try to avoid loop; rounding avoids numerical stability
+      # l <- rep(0,N1)
+      # ytmp <- y[y1==1]
+      # for(j in 1:N1) l[j] <- sum(rbinom(ytmp[j],1,round(r/(r+1:ytmp[j]-1),6))) # Could try to avoid loop; rounding avoids numerical stability
 
       # Update r from conjugate gamma distribution given l and psi
-      psi <- exp(eta2[y1==1])/(1+exp(eta2[y1==1]))
-      r2 <- rgamma(1,0.01+sum(l),0.01-sum(log(1-psi)))
+      # psi <- exp(eta2[y1==1])/(1+exp(eta2[y1==1]))
+      # r2 <- rgamma(1,0.01+sum(l),0.01-sum(log(1-psi)))
 
 
       # Update Sigma.phi
@@ -252,12 +252,12 @@ BSTZINB <- function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthi
       })
 
       # Store
-      if (i > nburn & i%%nthin==0) {
+      if (i> nburn & i%%nthin==0) {
         j <- (i-nburn)/nthin
         Alpha[j,,chain] <- alpha
         Beta[j,,chain] <- beta
         R[j,chain] <- r
-        R2[j,chain] <- r2
+        # R2[j,chain] <- r2
         Sigphi[j,,chain] <- c(Sigmaphi)
         PHI1[j,,chain] <- phi1
         PHI2[j,,chain] <- phi2
@@ -268,15 +268,15 @@ BSTZINB <- function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthi
         I[j,,chain] <- y1
       }
 
-      # if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/nsim*100,2),"% completed"))
+      # if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/niter*100,2),"% completed"))
       if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/niter*100,2),"% completed |","Test:",conv.test(R[,chain])))
 
     }
   }
 
-  list_params <- list(Alpha=Alpha, Beta=Beta, R=R, R2=R2, Sigphi=Sigphi,
+  list.params = list(Alpha=Alpha, Beta=Beta, R=R, Sigphi=Sigphi,
                      PHI1=PHI1, PHI2=PHI2, PHI3=PHI3, PHI4=PHI4,
                      Eta1=Eta1, Eta2=Eta2, I=I)
-  return(list_params)
+  return(list.params)
 
 }
