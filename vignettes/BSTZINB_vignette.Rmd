@@ -164,6 +164,7 @@ We can additionally make histograms and spaghetti plots and Moran's I:
 ```{r}
 # blue histogram
 tmp <- table(y)/N*100  # convert to %s (divide by N multiply by 100)
+oldpar <- par(no.readonly = TRUE)
 par(mar=c(3,3,1,1))
 barplot(tmp, ylab="Percent",xlab="Count",col="lightblue")
 
@@ -171,6 +172,8 @@ barplot(tmp, ylab="Percent",xlab="Count",col="lightblue")
 library(CorrMixed)
 # Plot individual profiles + mean
 Spaghetti.Plot(Dataset = this_dat, Outcome = y, Id=sid, Time = tid)
+
+par(oldpar)
 
 # Moran's I
 library(ape)
@@ -243,9 +246,10 @@ conv.test(res3$Beta) ## Convergence test for Beta parameters
 conv.test(res3$R) ## Convergence test for R parameters
 
 ## Plotting the chains for the parameters
+oldpar <- par(no.readonly = TRUE)
 par(mfrow=c(1,2));plot(res3$R[,1],main="R");plot(res3$R[,2],main="R")
 par(mfrow=c(1,2));plot(res3$Alpha[,1,1],type='o',main="Alpha");plot(res3$Alpha[,1,2],type='o',main="Alpha")
-
+par(oldpar)
 ## Checking the estimated beta with the true beta
 apply(res3$Beta,2,mean)
 true.beta
@@ -265,10 +269,10 @@ glimpse(res4)
 conv.test(res4$Alpha) ## Alpha parameters
 conv.test(res4$Beta) ## Beta parameters
 conv.test(res4$R) ## R parameters
-
-par(mfrow=c(1,3));plot(res4$R[,1],main="R");plot(res4$R[,2],main="R")
-par(mfrow=c(1,3));plot(res4$Alpha[,1,1],type='o',main="Alpha");plot(res4$Alpha[,1,2],type='o',main="Alpha")
-
+oldpar <- par(no.readonly = TRUE)
+par(mfrow=c(1,2));plot(res4$R[,1],main="R");plot(res4$R[,2],main="R")
+par(mfrow=c(1,2));plot(res4$Alpha[,1,1],type='o',main="Alpha");plot(res4$Alpha[,1,2],type='o',main="Alpha")
+par(oldpar)
 ## Posterior means for beta and R
 apply(res4$Beta,2,mean)
 mean(res4$R)

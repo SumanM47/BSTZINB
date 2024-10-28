@@ -115,7 +115,7 @@ BSTZINB <- function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthi
     # Inits #
     #########
 
-    set.seed(2023+chain); beta <- alpha <- rnorm(p)
+    beta <- alpha <- rnorm(p)
     phi_init <- rmvnorm(1,sigma=diag(.1,16*n))	  # Random effects
     phi_init <- matrix(phi_init,ncol=16,byrow=T)  # n x 3 matrix of spatial effects
     phi1 <- phi_init[,1]
@@ -269,7 +269,7 @@ BSTZINB <- function(y, X, A, LinearT = TRUE, nchain=3, niter=100, nburn=20, nthi
       }
 
       # if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/niter*100,2),"% completed"))
-      if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/niter*100,2),"% completed |","Test:",conv.test(R[,chain])))
+      # if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/niter*100,2),"% completed |","Test:",conv.test(R[,chain])))
 
     }
   }

@@ -86,7 +86,7 @@ BNB <- function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
     #########
     # Inits #
     #########
-    set.seed(2023+chain); beta <- alpha <- rnorm(p)
+    beta <- alpha <- rnorm(p)
     r <- 1
     Acc <- 0
     y1 <- rep(0,N)             # At risk indicator (this is W in paper)
@@ -126,7 +126,7 @@ BNB <- function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
         Eta[j,,chain] <- eta
       }
 
-      if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/niter*100,2),"% completed |","Test:",conv.test(R[,chain])))
+      # if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/niter*100,2),"% completed |","Test:",conv.test(R[,chain])))
     }
   }
 

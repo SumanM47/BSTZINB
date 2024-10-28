@@ -159,6 +159,8 @@ qRankPar <- function(state.set,cname,bstfit,vn=12,
   zinb.summary$County <- factor(zinb.summary$County)
   zinb.summary.sample <- zinb.summary[floor(seq(1,ns,length.out=vn)),]
 
+  oldpar <- par(no.readonly = TRUE)
+  on.exit(par(oldpar))
   par(mfrow=c(1,1),mar=c(3,5,1,1))
   p <- ggplot2::ggplot(zinb.summary.sample,aes(x=reorder(.data$County, .data$m), y=.data$m, fill=.data$County)) + ggplot2::geom_bar(alpha=0.8,stat="identity") +
     ggplot2::xlab("") + ggplot2::ylab("Probability at risk") + ggplot2::ylim(0,1) + ggplot2::theme_bw() + ggplot2::theme(legend.position = "")
@@ -238,6 +240,8 @@ qRankParTop <- function(state.set,cname,bstfit,vn=12,
   zinb.summary$County <- factor(zinb.summary$County)
   zinb.summary.sample <- zinb.summary[c(1:vn),]
 
+  oldpar <- par(no.readonly = TRUE)
+  on.exit(par(oldpar))
   par(mfrow=c(1,1),mar=c(3,5,1,1))
   p <- ggplot2::ggplot(zinb.summary.sample,aes(x=reorder(.data$County, .data$m), y=.data$m, fill=.data$County)) +
     ggplot2::geom_bar(alpha=0.8,stat="identity") +

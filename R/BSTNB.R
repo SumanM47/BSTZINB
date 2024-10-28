@@ -104,7 +104,7 @@ BSTNB <- function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
     #########
     # Inits #
     #########
-    set.seed(2023+chain); beta<-rnorm(p)
+    beta<-rnorm(p)
     phi_init <- spam::rmvnorm(1,sigma=diag(.1,2*n))	  # Random effects
     phi_init <- matrix(phi_init,ncol=2,byrow=T)  # n x 3 matrix of spatial effects
     phi3 <- phi_init[,1]
@@ -200,7 +200,7 @@ BSTNB <- function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
       }
 
       # if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/nsim*100,2),"% completed"))
-      if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/niter*100,2),"% completed |","Test:",conv.test(R[,chain])))
+      # if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/niter*100,2),"% completed |","Test:",conv.test(R[,chain])))
 
     }
   }
