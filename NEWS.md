@@ -1,5 +1,3 @@
-# BSTZINB (development version)
-
-* Added a `NEWS.md` file to track changes to the package.
+# BSTZINB (1.0.1)
 
 * Updated author info
