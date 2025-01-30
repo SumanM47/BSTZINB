@@ -1,4 +1,4 @@
-# BSTZINB (development version)
+# BSTZINB 2.0.0
 
 # BSTZINB 1.0.1
 
