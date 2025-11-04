@@ -264,7 +264,7 @@ apply(res3$Beta,2,mean)
 true.beta
 
 ## Computing DIC
-compute_ZINB_DIC(y,res3,dim(res3$Beta)[1],2)
+compute_ZINB_DIC(y,res3)
 ```
 
 
@@ -287,7 +287,7 @@ apply(res4$Beta,2,mean)
 mean(res4$R)
 
 ## DIC
-compute_ZINB_DIC(y,res4,dim(res4$Beta)[1],2)
+compute_ZINB_DIC(y,res4)
 ```
 
 These results may be summarized using the supplied `ResultTableSummary` function. Here we summarize the output of the BSTZINB model with the linear time trend:

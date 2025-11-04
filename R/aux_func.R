@@ -307,7 +307,7 @@ ResultTableSummary2 <- function(y, X, A, LinearT=FALSE, nchain=3, niter=100, nbu
 #' A <- get_adj_mat(county.adjacency,countyname,c("IA"))
 #' \donttest{
 #' res3 <- BSTZINB(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
-#' compute_ZINB_DIC(y,res3,lastit=(100-20)/1,nchain=3)
+#' compute_ZINB_DIC(y,res3)
 #' }
 #'
 #' @export
@@ -320,8 +320,14 @@ compute_ZINB_DIC <- function(y,bstfit,lastit,nchain){
   if(is.null(bstfit$Eta1)){stop("fit must have a named component Eta1")}
   if(is.null(bstfit$Eta2)){stop("fit must have a named component Eta2")}
   if(is.null(bstfit$R)){stop("fit must have a named component R")}
-  if(!is.numeric(lastit) | lastit <= 0){stop("lastit must be a positive integer")}
-  if(!is.numeric(nchain) | nchain <= 0){stop("nchain must be a positive integer")}
+  # if(!is.numeric(lastit) | lastit <= 0){stop("lastit must be a positive integer")}
+  # if(!is.numeric(nchain) | nchain <= 0){stop("nchain must be a positive integer")}
+
+  lastit <- dim(bstfit$Eta1)[3]
+  nchain <- 1
+  if(length(dim(bstfit$Eta1))>3){
+  nchain <- dim(bstfit$Eta1)[4]
+  }
 
   computeD.avg <- function(y,bstfit){
     eta1.mean <- apply(bstfit$Eta1,2,mean)
@@ -395,7 +401,7 @@ compute_ZINB_DIC <- function(y,bstfit,lastit,nchain){
 #' A <- get_adj_mat(county.adjacency,countyname,c("IA"))
 #' \donttest{
 #' res2 <- BSTNB(y, X, A, nchain=3, niter=100, nburn=20, nthin=1)
-#' compute_NB_DIC(y,res2,lastit=(100-20)/1,nchain=3)
+#' compute_NB_DIC(y,res2)
 #' }
 #'
 #' @export
@@ -407,8 +413,14 @@ compute_NB_DIC <- function(y,bstfit,lastit,nchain){
   if(min(y,na.rm=T)<0){stop("y must be non-negative")}
   if(is.null(bstfit$Eta1)){stop("fit must have a named component Eta1")}
   if(is.null(bstfit$R)){stop("fit must have a named component R")}
-  if(!is.numeric(lastit) | lastit <= 0){stop("lastit must be a positive integer")}
-  if(!is.numeric(nchain) | nchain <= 0){stop("nchain must be a positive integer")}
+  # if(!is.numeric(lastit) | lastit <= 0){stop("lastit must be a positive integer")}
+  # if(!is.numeric(nchain) | nchain <= 0){stop("nchain must be a positive integer")}
+
+  lastit <- dim(bstfit$Eta1)[3]
+  nchain <- 1
+  if(length(dim(bstfit$Eta1))>3){
+    nchain <- dim(bstfit$Eta1)[4]
+  }
 
   computeD.avg <- function(y,bstfit){
     eta.mean <- apply(bstfit$Eta1,2,mean)
