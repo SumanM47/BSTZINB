@@ -72,9 +72,9 @@ covm <- matrix(c(.5,.10,.10,-.10,
               .10,.10,.5,.10,
               -.10,.10,.10,.15),4,4)# Conditional Cov of phi1 and phi2 given phi_{-i} 
 Q <- as.spam(diag(m)-kappa*A)			     
-covphi <- solve(Q)%x%covm			        # 3n x 3n covariance of phis
-phi <- rmvnorm(1,sigma=covphi)		    # 3n vector of spatial effects
-phitmp <- matrix(phi,ncol=4,byrow=T)  # n x 3 matrix of spatial effects
+covphi <- solve(Q)%x%covm			        # 4n x 4n covariance of phis
+phi <- rmvnorm(1,sigma=covphi)		    # 4n vector of spatial effects
+phitmp <- matrix(phi,ncol=4,byrow=T)  # n x 4 matrix of spatial effects
 
 true.phi1 <- phi1 <- phitmp[,1]-mean(phitmp[,1])   # n x 1 phi1 vector -- Centered
 true.phi2 <- phi2 <- phitmp[,2]-mean(phitmp[,2])   # n x 1 phi2 vector, etc.
@@ -140,8 +140,8 @@ pzero <- length(y[y==0])/N             # Proportion of zeros
 # quantile(y)
 
 
-this_dat <- data.frame(sid,tid,y,X[,-1])
-colnames(this_dat) <- c("sid","tid","y","x")
+this_dat <- data.frame(sid,tid,y,X)
+colnames(this_dat) <- c("sid","tid","y","Intercept","x")
 # data(synth_dat_IA)
 # this_dat <- synth_dat_IA
 head(this_dat)
