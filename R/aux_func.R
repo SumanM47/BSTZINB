@@ -276,12 +276,10 @@ ResultTableSummary2 <- function(y, X, A, LinearT=FALSE, nchain=3, niter=100, nbu
 #' @description
 #' Computes DIC for a BSTZINB fitted object
 #'
-#' @usage compute_ZINB_DIC(y,bstfit,lastit,nchain)
+#' @usage compute_ZINB_DIC(y,bstfit)
 #'
 #' @param y vector of counts, must be non-negative, the response used for fitting a BSTZINB model
 #' @param bstfit BSTZINB fitted object
-#' @param lastit positive integer, size of the chain used to fit BSTZINB
-#' @param nchain positive integer, number of chains used to fit BSTZINB
 #'
 #' @importFrom stats cov
 #' @importFrom stats dnbinom
@@ -311,7 +309,7 @@ ResultTableSummary2 <- function(y, X, A, LinearT=FALSE, nchain=3, niter=100, nbu
 #' }
 #'
 #' @export
-compute_ZINB_DIC <- function(y,bstfit,lastit,nchain){
+compute_ZINB_DIC <- function(y,bstfit){
 
   if(is.null(y)){stop("y must be provided")}
   if(!is.vector(y)){stop("y must be a vector")}
@@ -329,7 +327,7 @@ compute_ZINB_DIC <- function(y,bstfit,lastit,nchain){
   nchain <- dim(bstfit$Eta1)[4]
   }
 
-  computeD.avg <- function(y,bstfit){
+  computeD.avg <- function(y,bstfit,nchain){
     eta1.mean <- apply(bstfit$Eta1,2,mean)
     eta2.mean <- apply(bstfit$Eta2,2,mean)
     r.mean    <- mean(bstfit$R)
@@ -360,7 +358,7 @@ compute_ZINB_DIC <- function(y,bstfit,lastit,nchain){
     }
   }
 
-  comp1 <- computeD.avg(y,bstfit)
+  comp1 <- computeD.avg(y,bstfit,nchain)
   comp2 <- mean(Dmat)
   DIC <- comp1 + 2*( comp2 - comp1)
   return(DIC)
@@ -375,8 +373,6 @@ compute_ZINB_DIC <- function(y,bstfit,lastit,nchain){
 #'
 #' @param y vector of counts, must be non-negative, the response used for fitting a BSTNB or BSTP model
 #' @param bstfit BSTNB or BNB fitted object
-#' @param lastit positive integer, size of the chain used to fit BSTZINB
-#' @param nchain positive integer, number of chains used to fit BSTZINB
 #'
 #' @importFrom stats cov
 #' @importFrom stats dnbinom
@@ -405,7 +401,7 @@ compute_ZINB_DIC <- function(y,bstfit,lastit,nchain){
 #' }
 #'
 #' @export
-compute_NB_DIC <- function(y,bstfit,lastit,nchain){
+compute_NB_DIC <- function(y,bstfit){
 
   if(is.null(y)){stop("y must be provided")}
   if(!is.vector(y)){stop("y must be a vector")}
