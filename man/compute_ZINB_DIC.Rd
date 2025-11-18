@@ -4,16 +4,12 @@
 \alias{compute_ZINB_DIC}
 \title{DIC for BSTZINB fitted objects}
 \usage{
-compute_ZINB_DIC(y,bstfit,lastit,nchain)
+compute_ZINB_DIC(y,bstfit)
 }
 \arguments{
 \item{y}{vector of counts, must be non-negative, the response used for fitting a BSTZINB model}
 
 \item{bstfit}{BSTZINB fitted object}
-
-\item{lastit}{positive integer, size of the chain used to fit BSTZINB}
-
-\item{nchain}{positive integer, number of chains used to fit BSTZINB}
 }
 \value{
 DIC value
@@ -32,7 +28,7 @@ countyname <- unique(IAcities$county_name)
 A <- get_adj_mat(county.adjacency,countyname,c("IA"))
 \donttest{
 res3 <- BSTZINB(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
-compute_ZINB_DIC(y,res3,lastit=(100-20)/1,nchain=3)
+compute_ZINB_DIC(y,res3)
 }
 
 }

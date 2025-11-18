@@ -182,7 +182,7 @@ ResultTableSummary2 <- function(y, X, A, LinearT=FALSE, nchain=3, niter=100, nbu
   colnames(temp4) <- c("a.t",paste("a",colnames(alphamat),sep="."),"b.t",paste("b",colnames(betamat),sep="."))
   temp4[,paste("a",colnames(alphamat),sep=".")] <- alphamat
   temp4[,paste("b",colnames(betamat),sep=".")]  <- betamat
-  DIC4 <- compute_ZINB_DIC(y,stfit4,(niter-nburn)/nthin,nchain)
+  DIC4 <- compute_ZINB_DIC(y,stfit4)
   ind4 <- rep(NA,ncol(temp4)); names(ind4) <-  colnames(temp4)
   ind4[paste("a",colnames(alphamat),sep=".")] <- conv.test(stfit4$Alpha)
   ind4[paste("b",colnames(betamat),sep=".")] <- conv.test(stfit4$Beta)
@@ -193,7 +193,7 @@ ResultTableSummary2 <- function(y, X, A, LinearT=FALSE, nchain=3, niter=100, nbu
   temp3 <- data.frame(matrix(NA,nrow(temp4),ncol(temp4)))
   colnames(temp3) <- colnames(temp4)
   temp3[,paste("b",colnames(betamat),sep=".")] <- betamat
-  DIC3 <- compute_NB_DIC(y,stfit3,(niter-nburn)/nthin,nchain)
+  DIC3 <- compute_NB_DIC(y,stfit3)
   ind3 <- rep(NA,length(ind4)); names(ind3) <- names(ind4)
   ind3[paste("b",colnames(betamat),sep=".")] <- conv.test(stfit3$Beta)
 
@@ -204,7 +204,7 @@ ResultTableSummary2 <- function(y, X, A, LinearT=FALSE, nchain=3, niter=100, nbu
   colnames(temp2) <- colnames(temp4)
   temp2[,paste("a",colnames(alphamat),sep=".")] <- alphamat
   temp2[,paste("b",colnames(betamat),sep=".")]  <- betamat
-  DIC2 <- compute_ZINB_DIC(y,stfit2,(niter-nburn)/nthin,nchain)
+  DIC2 <- compute_ZINB_DIC(y,stfit2)
   ind2 <- rep(NA,length(ind4)); names(ind2) <- names(ind4)
   ind2[paste("a",colnames(alphamat),sep=".")] <- conv.test(stfit2$Alpha)
   ind2[paste("b",colnames(betamat),sep=".")] <- conv.test(stfit2$Beta)
@@ -214,7 +214,7 @@ ResultTableSummary2 <- function(y, X, A, LinearT=FALSE, nchain=3, niter=100, nbu
   temp1 <- data.frame(matrix(NA,nrow(temp4),ncol(temp4)))
   colnames(temp1) <- colnames(temp4)
   temp1[,paste("b",colnames(betamat),sep=".")]  <- betamat
-  DIC1 <- compute_NB_DIC(y,stfit1,(niter-nburn)/nthin,nchain)
+  DIC1 <- compute_NB_DIC(y,stfit1)
   ind1 <- rep(NA,length(ind4)); names(ind1) <- names(ind4)
   ind1[paste("b",colnames(betamat),sep=".")] <- conv.test(stfit1$Beta)
 
@@ -369,7 +369,7 @@ compute_ZINB_DIC <- function(y,bstfit){
 #' @description
 #' Computes DIC for a BSTNB or BNB fitted object
 #'
-#' @usage compute_NB_DIC(y,bstfit,lastit,nchain)
+#' @usage compute_NB_DIC(y,bstfit)
 #'
 #' @param y vector of counts, must be non-negative, the response used for fitting a BSTNB or BSTP model
 #' @param bstfit BSTNB or BNB fitted object
