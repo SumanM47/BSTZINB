@@ -249,7 +249,7 @@ ResultTableSummary2 <- function(y, X, A, LinearT=FALSE, nchain=3, niter=100, nbu
 
 
 
-  table.fin <- table %>% as_gt %>%
+  table.fin <- table %>% gtsummary::as_gt() %>%
     gt::tab_style(
       style = list(cell_text(color = "darkred")),
       locations = cells_body(columns=.data$stat_4,rows=(ind4==FALSE))
