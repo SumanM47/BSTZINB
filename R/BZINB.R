@@ -24,9 +24,11 @@
 #' @importFrom stats runif
 #' @importFrom stats spline
 #' @importFrom stats var
+#' @importFrom stats binomial
 #' @import BayesLogit
 #' @import spam
 #' @import MCMCpack
+#' @import msm
 #'
 #' @return list of posterior samples of the parameters of the model
 #'
@@ -65,7 +67,7 @@ BZINB <- function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
   T0b <- diag(.01,p)         # Uniform or Gamma(0.01,0.01) prior for r depending on MH or Gibbs
   s <- 0.0003                # Proposal variance  -- NOTE: may need to lower this as n_i increases
   kappa <- 0.999999
-  Q <- as.spam(diag(apply(A,1,sum)))-kappa*as.spam(A)
+  Q <- spam::as.spam(diag(apply(A,1,sum))-kappa*A)
 
   ############
   # Num Sims #
@@ -101,16 +103,16 @@ BZINB <- function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
 
       # Update alpha
       mu <- X%*%alpha
-      w <- rpg(N,1,mu)
+      w <- BayesLogit::rpg(N,1,mu)
       z <- (y1-1/2)/w
       v <- solve(crossprod(sqrt(w)*X)+T0a)
       m <- v%*%(T0a%*%alpha0+t(sqrt(w)*X)%*%(sqrt(w)*z))
       alpha <- c(spam::rmvnorm(1,m,v))
 
       # Update r
-      rnew <- rtnorm(1,r,sqrt(s),lower=0)       # Treat r as continuous
+      rnew <- msm::rtnorm(1,r,sqrt(s),lower=0)       # Treat r as continuous
       ratio <- sum(dnbinom(y[y1==1],rnew,q[y1==1],log=T))-sum(dnbinom(y[y1==1],r,q[y1==1],log=T))+
-        dtnorm(r,rnew,sqrt(s),0,log=T) - dtnorm(rnew,r,sqrt(s),0,log=T)   # Uniform Prior for R
+        msm::dtnorm(r,rnew,sqrt(s),0,log=T) - msm::dtnorm(rnew,r,sqrt(s),0,log=T)   # Uniform Prior for R
       # Proposal not symmetric
       if (log(runif(1)) < ratio) {
         r <- rnew
@@ -120,7 +122,7 @@ BZINB <- function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
       # Update at-risk indicator y1 (W in paper)
       eta1 <- X%*%alpha
       eta2 <- X%*%beta              # Use all n observations
-      pii <- pmax(0.01,pmin(0.99,inv.logit(eta1)))  # at-risk probability
+      pii <- pmax(0.01,pmin(0.99,binomial()$linkinv(eta1)))  # at-risk probability
       q <- pmax(0.01,pmin(0.99,1/(1+exp(eta2))))                      # Pr(y=0|y1=1)
       theta <- pii*(q^r)/(pii*(q^r)+1-pii)         # Conditional prob that y1=1 given y=0 -- i.e. Pr(chance zero|observed zero)
       y1[y==0] <- rbinom(N0,1,theta[y==0])      # If y=0, then draw a "chance zero" w.p. theta, otherwise y1=1
@@ -129,7 +131,7 @@ BZINB <- function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
 
       # Update beta
       eta <- X[y1==1,]%*%beta
-      w <- rpg(N1,y[y1==1]+r,eta)                              # Polya weights
+      w <- BayesLogit::rpg(N1,y[y1==1]+r,eta)                              # Polya weights
       z <- (y[y1==1]-r)/(2*w)                                   # Latent "response"
       v <- solve(crossprod(X[y1==1,]*sqrt(w))+T0b)
       m <- v%*%(T0b%*%beta0+t(sqrt(w)*X[y1==1,])%*%(sqrt(w)*z))

@@ -95,14 +95,14 @@ ResultTableSummary <- function(bstfit){
     colnames(temp) <- c(paste("a",colnames(alphamat),sep="."),paste("b",colnames(betamat),sep="."))
   }
 
-  temp %>% tbl_summary(statistic = list(all_continuous() ~ "{mean} ({p5}, {p95})", all_categorical() ~ "{n} ({p}%)"),
-                       digits = list(all_continuous() ~ c(3,3))) %>%
-    modify_header(label = "**Coefficients**",
+  temp %>% gtsummary::tbl_summary(statistic = list(all_continuous() ~ "{mean} ({p5}, {p95})", all_categorical() ~ "{n} ({p}%)"),
+                       digits = list(gtsummary::all_continuous() ~ c(3,3))) %>%
+    gtsummary::modify_header(label = "**Coefficients**",
                   stat_0 = '**Estimates**') %>%
-    modify_caption("**BSTZINB Model Coefficients**") %>%
-    bold_labels() %>%
-    modify_footnote(
-      all_stat_cols() ~ "Point estimates (90% credible intervals)")
+    gtsummary::modify_caption("**BSTZINB Model Coefficients**") %>%
+    gtsummary::bold_labels() %>%
+    gtsummary::modify_footnote(
+      gtsummary::all_stat_cols() ~ "Point estimates (90% credible intervals)")
 }
 
 
@@ -132,6 +132,7 @@ ResultTableSummary <- function(bstfit){
 #' @importFrom stats runif
 #' @importFrom stats spline
 #' @importFrom stats var
+#' @importFrom stats binomial
 #' @import ggplot2
 #' @import dplyr
 #' @import gtsummary
@@ -140,7 +141,6 @@ ResultTableSummary <- function(bstfit){
 #' @import MCMCpack
 #' @import msm
 #' @import splines
-#' @import boot
 #' @import gt
 #' @importFrom matrixcalc is.positive.definite
 #'
@@ -175,46 +175,46 @@ ResultTableSummary2 <- function(y, X, A, LinearT=FALSE, nchain=3, niter=100, nbu
   if(!is.numeric(X)){stop("X must be numeric")}
   if(!is.numeric(A)){stop("A must be numeric")}
 
-  stfit4 <- BSTZINB(y, X, A, LinearT=LinearT, nchain, niter, nburn, nthin)
+  stfit4 <- BSTZINB::BSTZINB(y, X, A, LinearT=LinearT, nchain, niter, nburn, nthin)
   alphamat <- apply(stfit4$Alpha,c(1,2),mean)
   betamat <- apply(stfit4$Beta,c(1,2),mean)
   temp4 <- data.frame(matrix(NA,nrow(alphamat),ncol(alphamat)+ncol(betamat)+2))
   colnames(temp4) <- c("a.t",paste("a",colnames(alphamat),sep="."),"b.t",paste("b",colnames(betamat),sep="."))
   temp4[,paste("a",colnames(alphamat),sep=".")] <- alphamat
   temp4[,paste("b",colnames(betamat),sep=".")]  <- betamat
-  DIC4 <- compute_ZINB_DIC(y,stfit4)
+  DIC4 <- BSTZINB::compute_ZINB_DIC(y,stfit4)
   ind4 <- rep(NA,ncol(temp4)); names(ind4) <-  colnames(temp4)
   ind4[paste("a",colnames(alphamat),sep=".")] <- conv.test(stfit4$Alpha)
   ind4[paste("b",colnames(betamat),sep=".")] <- conv.test(stfit4$Beta)
 
 
-  stfit3 <- BSTNB(y, X, A, nchain, niter, nburn, nthin)
+  stfit3 <- BSTZINB::BSTNB(y, X, A, nchain, niter, nburn, nthin)
   betamat  <- apply(stfit3$Beta,c(1,2),mean)
   temp3 <- data.frame(matrix(NA,nrow(temp4),ncol(temp4)))
   colnames(temp3) <- colnames(temp4)
   temp3[,paste("b",colnames(betamat),sep=".")] <- betamat
-  DIC3 <- compute_NB_DIC(y,stfit3)
+  DIC3 <- BSTZINB::compute_NB_DIC(y,stfit3)
   ind3 <- rep(NA,length(ind4)); names(ind3) <- names(ind4)
   ind3[paste("b",colnames(betamat),sep=".")] <- conv.test(stfit3$Beta)
 
-  stfit2 <- BZINB(y, X, A, nchain, niter, nburn, nthin)
+  stfit2 <- BSTZINB::BZINB(y, X, A, nchain, niter, nburn, nthin)
   alphamat <- apply(stfit2$Alpha,c(1,2),mean)
   betamat  <- apply(stfit2$Beta,c(1,2),mean)
   temp2 <- data.frame(matrix(NA,nrow(temp4),ncol(temp4)))
   colnames(temp2) <- colnames(temp4)
   temp2[,paste("a",colnames(alphamat),sep=".")] <- alphamat
   temp2[,paste("b",colnames(betamat),sep=".")]  <- betamat
-  DIC2 <- compute_ZINB_DIC(y,stfit2)
+  DIC2 <- BSTZINB::compute_ZINB_DIC(y,stfit2)
   ind2 <- rep(NA,length(ind4)); names(ind2) <- names(ind4)
   ind2[paste("a",colnames(alphamat),sep=".")] <- conv.test(stfit2$Alpha)
   ind2[paste("b",colnames(betamat),sep=".")] <- conv.test(stfit2$Beta)
 
-  stfit1 <- BNB(y, X, A, nchain, niter, nburn, nthin)
+  stfit1 <- BSTZINB::BNB(y, X, A, nchain, niter, nburn, nthin)
   betamat <- apply(stfit1$Beta,c(1,2),mean)
   temp1 <- data.frame(matrix(NA,nrow(temp4),ncol(temp4)))
   colnames(temp1) <- colnames(temp4)
   temp1[,paste("b",colnames(betamat),sep=".")]  <- betamat
-  DIC1 <- compute_NB_DIC(y,stfit1)
+  DIC1 <- BSTZINB::compute_NB_DIC(y,stfit1)
   ind1 <- rep(NA,length(ind4)); names(ind1) <- names(ind4)
   ind1[paste("b",colnames(betamat),sep=".")] <- conv.test(stfit1$Beta)
 
@@ -224,15 +224,15 @@ ResultTableSummary2 <- function(y, X, A, LinearT=FALSE, nchain=3, niter=100, nbu
                   rep("2BZINB",nrow(temp2)),
                   rep("1BNB",nrow(temp1)))
 
-  table <- tabout%>% tbl_summary(by = var,missing = "no",
-                                 digits = list(all_continuous() ~ c(3,3)))%>%
-    modify_header(label = "**Coefficients**",
+  table <- tabout%>% gtsummary::tbl_summary(by = var,missing = "no",
+                                 digits = list(gtsummary::all_continuous() ~ c(3,3))) %>%
+    gtsummary::modify_header(label = "**Coefficients**",
                   stat_1 = '**BNB**',
                   stat_2 = '**BZINB**',
                   stat_3 = '**BSTNB**',
                   stat_4 = '**BSTZINB**') %>%
-    modify_footnote(
-      all_stat_cols() ~ paste("Point estimates (90% credible intervals)",
+    gtsummary::modify_footnote(
+      gtsummary::all_stat_cols() ~ paste("Point estimates (90% credible intervals)",
                               "DIC1 = ",round(DIC1,1),";",
                               "DIC2 = ",round(DIC2,1),";",
                               "DIC3 = ",round(DIC3,1),";",
@@ -250,19 +250,19 @@ ResultTableSummary2 <- function(y, X, A, LinearT=FALSE, nchain=3, niter=100, nbu
 
 
   table.fin <- table %>% as_gt %>%
-    tab_style(
+    gt::tab_style(
       style = list(cell_text(color = "darkred")),
       locations = cells_body(columns=.data$stat_4,rows=(ind4==FALSE))
     ) %>%
-    tab_style(
+    gt::tab_style(
       style = list(cell_text(color = "darkred")),
       locations = cells_body(columns=.data$stat_3,rows=(ind3==FALSE))
-    )%>%
-    tab_style(
+    ) %>%
+    gt::tab_style(
       style = list(cell_text(color = "darkred")),
       locations = cells_body(columns=.data$stat_2,rows=(ind2==FALSE))
-    )%>%
-    tab_style(
+    ) %>%
+    gt::tab_style(
       style = list(cell_text(color = "darkred")),
       locations = cells_body(columns=.data$stat_1,rows=(ind1==FALSE))
     )
@@ -290,7 +290,7 @@ ResultTableSummary2 <- function(y, X, A, LinearT=FALSE, nchain=3, niter=100, nbu
 #' @importFrom stats runif
 #' @importFrom stats spline
 #' @importFrom stats var
-#' @import boot
+#' @importFrom stats binomial
 #'
 #' @return DIC value
 #'
@@ -331,7 +331,7 @@ compute_ZINB_DIC <- function(y,bstfit){
     eta1.mean <- apply(bstfit$Eta1,2,mean)
     eta2.mean <- apply(bstfit$Eta2,2,mean)
     r.mean    <- mean(bstfit$R)
-    pii <- boot::inv.logit(eta1.mean)
+    pii <- binomial()$linkinv(eta1.mean)
     q <- pmax(0.01,pmin(0.99,1/(1+exp(eta2.mean))))
     I <- bstfit$I[dim(bstfit$I)[1],,nchain]
     dNB <- dnbinom(y[I==1],r.mean,q[I==1],log=T)
@@ -343,7 +343,7 @@ compute_ZINB_DIC <- function(y,bstfit){
     eta1 <- bstfit$Eta1[iter,,chain]
     eta2 <- bstfit$Eta2[iter,,chain]
     r <- bstfit$R[iter,chain]
-    pii <- boot::inv.logit(eta1)
+    pii <- binomial()$linkinv(eta1)
     q <- pmax(0.01,pmin(0.99,1/(1+exp(eta2))))
     I <- bstfit$I[iter,,chain]
     dNB <- dnbinom(y[I==1],r,q[I==1],log=T)
@@ -485,14 +485,14 @@ conv.test <- function(params,nchain=3,thshold=1.96){
     p <- dim(params)[2]
     out <- rep(NA,p)
     for(colid in 1:p){
-      mcmc.temp <- mcmc(params[,colid,])
-      testout <- geweke.diag(mcmc.temp) %>% unlist
+      mcmc.temp <- coda::mcmc(params[,colid,])
+      testout <- coda::geweke.diag(mcmc.temp) %>% unlist
       out[colid] <- as.logical(prod(abs(testout[1:nchain])<thshold))
     }
     return(out)
   }else{
-    mcmc.temp <- mcmc(params)
-    testout <- geweke.diag(mcmc.temp) %>% unlist
+    mcmc.temp <- coda::mcmc(params)
+    testout <- coda::geweke.diag(mcmc.temp) %>% unlist
     return(as.logical(prod(abs(testout[1:nchain])<thshold)))
   }
 

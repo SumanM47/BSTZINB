@@ -113,8 +113,8 @@ USDmapCount <- function(state.sel,dat,scol,tcol=NULL,tsel=NULL,cname,uplim=NULL)
 #' @importFrom stats runif
 #' @importFrom stats spline
 #' @importFrom stats var
+#' @importFrom stats binomial
 #' @import dplyr
-#' @import boot
 #' @import ggplot2
 #' @import datasets
 #' @import graphics
@@ -153,7 +153,7 @@ qRankPar <- function(state.set,cname,bstfit,vn=12,
 
   ns <- dim(bstfit$PHI1)[2]
 
-  qij.mat <- matrix(boot::inv.logit(apply(bstfit$Eta1,2,mean)),nrow=ns)
+  qij.mat <- matrix(binomial()$linkinv(apply(bstfit$Eta1,2,mean)),nrow=ns)
   zinb.summary <- data.frame("County"=cname, "m" = rowMeans(qij.mat))
   zinb.summary <- zinb.summary[order(zinb.summary$m),]
   zinb.summary$County <- factor(zinb.summary$County)
@@ -195,8 +195,7 @@ qRankPar <- function(state.set,cname,bstfit,vn=12,
 #' @importFrom stats runif
 #' @importFrom stats spline
 #' @importFrom stats var
-#' @import dplyr
-#' @import BayesLogit
+#' @importFrom stats binomial
 #' @import ggplot2
 #' @import datasets
 #' @import graphics
@@ -234,15 +233,15 @@ qRankParTop <- function(state.set,cname,bstfit,vn=12,
 
   ns <- dim(bstfit$PHI1)[2]
 
-  qij.mat <- matrix(boot::inv.logit(apply(bstfit$Eta1,2,mean)),nrow=ns)
+  qij.mat <- matrix(binomial()$linkinv(apply(bstfit$Eta1,2,mean)),nrow=ns)
   zinb.summary <- data.frame("County"=cname, "m" = rowMeans(qij.mat))
   zinb.summary <- zinb.summary[order(zinb.summary$m,decreasing = TRUE),]
   zinb.summary$County <- factor(zinb.summary$County)
   zinb.summary.sample <- zinb.summary[c(1:vn),]
 
-  oldpar <- par(no.readonly = TRUE)
-  on.exit(par(oldpar))
-  par(mfrow=c(1,1),mar=c(3,5,1,1))
+  oldpar <- graphics::par(no.readonly = TRUE)
+  on.exit(graphics::par(oldpar))
+  graphics::par(mfrow=c(1,1),mar=c(3,5,1,1))
   p <- ggplot2::ggplot(zinb.summary.sample,aes(x=reorder(.data$County, .data$m), y=.data$m, fill=.data$County)) +
     ggplot2::geom_bar(alpha=0.8,stat="identity") +
     ggplot2::xlab("") +
@@ -281,10 +280,10 @@ qRankParTop <- function(state.set,cname,bstfit,vn=12,
 #' @importFrom stats runif
 #' @importFrom stats spline
 #' @importFrom stats var
+#' @importFrom stats spline
 #' @import datasets
 #' @import ggplot2
 #' @import dplyr
-#' @import splines
 #' @importFrom reshape melt
 #'
 #' @return time-trend curves

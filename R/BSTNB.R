@@ -24,7 +24,6 @@
 #' @importFrom stats runif
 #' @importFrom stats spline
 #' @importFrom stats var
-#' @import dplyr
 #' @import BayesLogit
 #' @import spam
 #' @import MCMCpack
@@ -82,7 +81,7 @@ BSTNB <- function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
   T0b <- diag(.01,p)         # Uniform or Gamma(0.01,0.01) prior for r depending on MH or Gibbs
   s <- 0.0003                # Proposal variance  -- NOTE: may need to lower this as n_i increases
   kappa <- 0.999999
-  Q <- as.spam(diag(apply(A,1,sum)))-kappa*as.spam(A)
+  Q <- spam::as.spam(diag(apply(A,1,sum))-kappa*A)
 
   ############
   # Num Sims #
@@ -129,9 +128,9 @@ BSTNB <- function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
     for (i in 1:niter){
 
       # Update r
-      rnew <- rtnorm(1,r,sqrt(s),lower=0)       # Treat r as continuous
+      rnew <- msm::rtnorm(1,r,sqrt(s),lower=0)       # Treat r as continuous
       ratio <- sum(dnbinom(y,rnew,q,log=T))-sum(dnbinom(y,r,q,log=T))+
-        dtnorm(r,rnew,sqrt(s),0,log=T) - dtnorm(rnew,r,sqrt(s),0,log=T)   # Uniform Prior for R
+        msm::dtnorm(r,rnew,sqrt(s),0,log=T) - msm::dtnorm(rnew,r,sqrt(s),0,log=T)   # Uniform Prior for R
       # Proposal not symmetric
       if (log(runif(1)) < ratio) {
         r <- rnew
@@ -150,7 +149,7 @@ BSTNB <- function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
 
       # Update beta
       eta <- X%*%beta+Phi3+Phi4*t
-      w <- rpg(N,y+r,eta)                               # Polya weights
+      w <- BayesLogit::rpg(N,y+r,eta)                               # Polya weights
       z <- (y-r)/(2*w)
       v <- solve(crossprod(X*sqrt(w))+T0b)
       m <- v%*%(T0b%*%beta0+t(sqrt(w)*X)%*%(sqrt(w)*(z-Phi3-Phi4*t)))
@@ -159,10 +158,10 @@ BSTNB <- function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
       # Update phi3
       priorprec <- as.numeric(1/(Sigmaphi[1,1]-Sigmaphi[1,-1]%*%solve(Sigmaphi[-1,-1])%*%Sigmaphi[-1,1]))*Q # Prior Prec of phi3|phi1,phi2,phi4
       priormean <- diag(n)%x%(Sigmaphi[1,-1]%*%solve(Sigmaphi[-1,-1]))%*%c(t(phimat[,-1]))      # Prior mean of phi3|phi1,phi2,phi4
-      prec <- priorprec+as.spam(diag(tapply(w,sid,sum),n,n))
+      prec <- priorprec+spam::as.spam(diag(tapply(w,sid,sum),n,n))
       tmp <- tapply(w*(z-X%*%beta-Phi4*t),sid,sum)
       m <- c(priorprec%*%priormean)+tmp
-      if(is.positive.definite(prec%>%as.matrix)) phi3 <- spam::rmvnorm.canonical(1, m, prec)[1,]
+      if(matrixcalc::is.positive.definite(prec%>%as.matrix)) phi3 <- spam::rmvnorm.canonical(1, m, prec)[1,]
 
       # Center
       phi3 <- phi3-mean(phi3)
@@ -172,10 +171,10 @@ BSTNB <- function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
       priorprec <- as.numeric(1/(Sigmaphi[2,2]-Sigmaphi[2,-2]%*%solve(Sigmaphi[-2,-2])%*%Sigmaphi[-2,2]))*Q # Prior Prec of phi4|phi1,phi2,phi3
       priormean <- diag(n)%x%(Sigmaphi[2,-2]%*%solve(Sigmaphi[-2,-2]))%*%c(t(phimat[,-2]))      # Prior mean of phi4|phi1,phi2,phi3
 
-      prec <- priorprec+as.spam(diag(tapply(w*t^2,sid,sum),n,n))
+      prec <- priorprec+spam::as.spam(diag(tapply(w*t^2,sid,sum),n,n))
       tmp <- tapply(t*w*(z-X%*%beta-Phi3),sid,sum)
       m <- c(priorprec%*%priormean)+tmp
-      if(is.positive.definite(prec%>%as.matrix)) phi4 <- spam::rmvnorm.canonical(1, m, prec)[1,]
+      if(matrixcalc::is.positive.definite(prec%>%as.matrix)) phi4 <- spam::rmvnorm.canonical(1, m, prec)[1,]
 
       # Center
       phi4 <- phi4-mean(phi4)
@@ -184,7 +183,7 @@ BSTNB <- function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
       # Update Sigma.phi
       phimat <- cbind(phi3,phi4)
       try({
-        Sigmaphi <- riwish(2+n-1,diag(2)+t(phimat)%*%Q%*%phimat)
+        Sigmaphi <- MCMCpack::riwish(2+n-1,diag(2)+t(phimat)%*%Q%*%phimat)
       })
 
       # Store

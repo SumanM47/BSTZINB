@@ -57,7 +57,7 @@ test_that("BNB works", {
   true.alpha <- rep(0.1,p)
   true.alpha[1:2] <- c(-0.25,0.25)
   eta1 <- Xtilde%*%true.alpha+Phi1+Phi2*t
-  pii <- inv.logit(eta1)        # 1-pr("structural zero")
+  pii <- binomial()$linkinv(eta1)        # 1-pr("structural zero")
   u <- rbinom(N,1,pii)          # at-risk indicator
   N1 <- sum(u)
   pstruct0 <- 1-mean(u)         # Proportion of structural zeros
@@ -145,7 +145,7 @@ test_that("BZINB works", {
   true.alpha <- rep(0.1,p)
   true.alpha[1:2] <- c(-0.25,0.25)
   eta1 <- Xtilde%*%true.alpha+Phi1+Phi2*t
-  pii <- inv.logit(eta1)        # 1-pr("structural zero")
+  pii <- binomial()$linkinv(eta1)        # 1-pr("structural zero")
   u <- rbinom(N,1,pii)          # at-risk indicator
   N1 <- sum(u)
   pstruct0 <- 1-mean(u)         # Proportion of structural zeros
@@ -233,7 +233,7 @@ test_that("BSTNB works", {
   true.alpha <- rep(0.1,p)
   true.alpha[1:2] <- c(-0.25,0.25)
   eta1 <- Xtilde%*%true.alpha+Phi1+Phi2*t
-  pii <- inv.logit(eta1)        # 1-pr("structural zero")
+  pii <- binomial()$linkinv(eta1)        # 1-pr("structural zero")
   u <- rbinom(N,1,pii)          # at-risk indicator
   N1 <- sum(u)
   pstruct0 <- 1-mean(u)         # Proportion of structural zeros
@@ -321,7 +321,7 @@ test_that("BSTZINB works", {
   true.alpha <- rep(0.1,p)
   true.alpha[1:2] <- c(-0.25,0.25)
   eta1 <- Xtilde%*%true.alpha+Phi1+Phi2*t
-  pii <- inv.logit(eta1)        # 1-pr("structural zero")
+  pii <- binomial()$linkinv(eta1)        # 1-pr("structural zero")
   u <- rbinom(N,1,pii)          # at-risk indicator
   N1 <- sum(u)
   pstruct0 <- 1-mean(u)         # Proportion of structural zeros

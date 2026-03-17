@@ -90,7 +90,6 @@ true.phi <- cbind(true.phi1,true.phi2,true.phi3,true.phi4)
 Followed by the fixed effects and the covariates `X`:
 
 ```{r}
-library(boot)
 tpop <- USAcities %>% filter(state_id=="IA") %>% group_by(county_fips) %>% summarise(tpop=population) %>% .[,2] %>% unlist %>% as.numeric
 x <- rep(log(tpop),nis)
 x <- (x-mean(x))/sd(x)
@@ -109,7 +108,7 @@ true.alpha <- rep(0.1,p)
 true.alpha[1:2] <- c(-0.25,0.25)
 # true.alpha <- c(-0.25,0.25,-0.5,0.25)
 eta1 <- Xtilde%*%true.alpha+Phi1+Phi2*t
-pii <- inv.logit(eta1)        # 1-pr("structural zero")
+pii <- binomial()$linkinv(eta1)        # 1-pr("structural zero")
 u <- rbinom(N,1,pii)          # at-risk indicator
 N1 <- sum(u)          
 pstruct0 <- 1-mean(u)         # Proportion of structural zeros
@@ -348,7 +347,7 @@ We can also map the time-averaged and time-specified probability of at-risk of d
 ```{r}
 # Map Visualization : Time-averaged probability at risk of disease 
 this_result_dat <- this_dat
-this_result_dat$y <- inv.logit(apply(res4$Eta1,2,mean))
+this_result_dat$y <- binomial()$linkinv(apply(res4$Eta1,2,mean))
 this_result_dat %>% head
 USDmapCount(state.sel = c("IA"),
             dat = this_result_dat,
@@ -358,7 +357,7 @@ USDmapCount(state.sel = c("IA"),
 
 # Map Visualization : Time-specified probability at risk of disease 
 this_result_dat <- this_dat
-this_result_dat$y <- inv.logit(apply(res4$Eta1,2,mean))
+this_result_dat$y <- binomial()$linkinv(apply(res4$Eta1,2,mean))
 this_result_dat %>% head
 USDmapCount(state.sel = c("IA"),
             dat = this_result_dat,

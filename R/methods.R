@@ -90,7 +90,7 @@ print.DCMB <- function(x,digits=3,...){
 #' @export
 summary.DCMB <- function(x,...){
   if(!is(x,"DCMB")){stop("x must be an object of class DCMB")}
-  vv <- ResultTableSummary(x)
+  vv <- BSTZINB::ResultTableSummary(x)
   class(vv) <- "summ.DCMB"
   return(vv)
 }
