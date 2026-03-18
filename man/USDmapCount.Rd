@@ -4,7 +4,7 @@
 \alias{USDmapCount}
 \title{Draw spatial maps of various quantities over regions in the US}
 \usage{
-USDmapCount(state.sel,dat,scol,tcol=NULL,tsel=NULL,cname,uplim=NULL)
+USDmapCount(state.sel, dat, scol, tcol = NULL, tsel = NULL, cname, uplim = NULL)
 }
 \arguments{
 \item{state.sel}{character vector giving the selected states}
@@ -31,8 +31,8 @@ Creates a map of any given quantity (at a selected time or averaged over time) f
 data(simdat)
 data(county.adjacency)
 data(USAcities)
-IAcities <- subset(USAcities,state_id=="IA")
+IAcities <- subset(USAcities, state_id == "IA")
 countyname <- unique(IAcities$county_name)
-USDmapCount(state.sel="IA",dat=simdat,scol=1,tcol=2,tsel=150,cname=countyname)
+USDmapCount(state.sel = "IA", dat = simdat, scol = 1, tcol = 2, tsel = 150, cname = countyname)
 
 }

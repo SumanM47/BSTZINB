@@ -4,7 +4,7 @@
 \alias{get_adj_mat}
 \title{Adjacency matrix for counties of one or many states in the United States}
 \usage{
-get_adj_mat(county.adjacency,Countyvec,Statevec)
+get_adj_mat(county.adjacency, Countyvec, Statevec)
 }
 \arguments{
 \item{county.adjacency}{data frame containing the neighborhood information for the counties of the entire US}
@@ -22,8 +22,8 @@ Creates the adjacency matrix for the supplied counties within the United States 
 \examples{
 data(county.adjacency)
 data(USAcities)
-IAcities <- subset(USAcities,state_id=="IA")
+IAcities <- subset(USAcities, state_id == "IA")
 countyname <- unique(IAcities$county_name)
-A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+A <- get_adj_mat(county.adjacency, countyname, c("IA"))
 
 }

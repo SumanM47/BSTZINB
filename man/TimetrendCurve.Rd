@@ -4,8 +4,8 @@
 \alias{TimetrendCurve}
 \title{Time-trend curve over the study time domain for counties in the US}
 \usage{
-TimetrendCurve(bstfit,cname,vn=5,smooth.mode=TRUE,
-                     cex.title=18, cex.lab=18, cex.legend=18)
+TimetrendCurve(bstfit, cname, vn = 5, smooth.mode = TRUE,
+                     cex.title = 18, cex.lab = 18, cex.legend = 18)
 }
 \arguments{
 \item{bstfit}{fitted object from BSTP, BSTNB or BSTZINB}
@@ -31,15 +31,16 @@ Produce a time-trend curve over the study time domain for counties in the US
 \examples{
 data(simdat)
 y <- simdat$y
-X <- cbind(simdat$V1,simdat$x)
+X <- cbind(simdat$V1, simdat$x)
 data(county.adjacency)
 data(USAcities)
-IAcities <- subset(USAcities,state_id=="IA")
+IAcities <- subset(USAcities, state_id == "IA")
 countyname <- unique(IAcities$county_name)
-A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+A <- get_adj_mat(county.adjacency, countyname, c("IA"))
 \donttest{
-res3 <- BSTZINB(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
-TimetrendCurve(res3,cname=countyname,vn=5,smooth.mode=TRUE,cex.title=18, cex.lab=12, cex.legend=12)
+res3 <- BSTZINB(y, X, A, LinearT = TRUE, nchain = 3, niter = 100, nburn = 20, nthin = 1)
+TimetrendCurve(res3, cname = countyname, vn = 5, smooth.mode = TRUE,
+                   cex.title = 18, cex.lab = 12, cex.legend = 12)
 }
 
 }

@@ -4,7 +4,7 @@
 \alias{compute_ZINB_DIC}
 \title{DIC for BSTZINB fitted objects}
 \usage{
-compute_ZINB_DIC(y,bstfit)
+compute_ZINB_DIC(y, bstfit)
 }
 \arguments{
 \item{y}{vector of counts, must be non-negative, the response used for fitting a BSTZINB model}
@@ -20,15 +20,15 @@ Computes DIC for a BSTZINB fitted object
 \examples{
 data(simdat)
 y <- simdat$y
-X <- cbind(simdat$V1,simdat$x)
+X <- cbind(simdat$V1, simdat$x)
 data(county.adjacency)
 data(USAcities)
-IAcities <- subset(USAcities,state_id=="IA")
+IAcities <- subset(USAcities, state_id == "IA")
 countyname <- unique(IAcities$county_name)
-A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+A <- get_adj_mat(county.adjacency, countyname, c("IA"))
 \donttest{
-res3 <- BSTZINB(y, X, A, LinearT=TRUE, nchain=3, niter=100, nburn=20, nthin=1)
-compute_ZINB_DIC(y,res3)
+res3 <- BSTZINB(y, X, A, LinearT = TRUE, nchain = 3, niter = 100, nburn = 20, nthin = 1)
+compute_ZINB_DIC(y, res3)
 }
 
 }

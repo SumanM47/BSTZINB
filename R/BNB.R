@@ -5,7 +5,7 @@
 #' Generate posterior samples for the parameters in a Bayesian Negative Binomial Model
 #'
 #' @usage BNB(y, X, A,
-#'            nchain=3, niter=100, nburn=20, nthin=1)
+#'            nchain = 3, niter = 100, nburn = 20, nthin = 1)
 #'
 #' @param y vector of counts, must be non-negative
 #' @param X matrix of covariates, numeric
@@ -24,7 +24,7 @@
 #' @importFrom stats runif
 #' @importFrom stats spline
 #' @importFrom stats var
-#' @import BayesLogit
+#' @importFrom BayesLogit rpg
 #' @import spam
 #' @import msm
 #'
@@ -33,53 +33,66 @@
 #' @examples
 #' data(simdat)
 #' y <- simdat$y
-#' X <- cbind(simdat$V1,simdat$x)
+#' X <- cbind(simdat$V1, simdat$x)
 #' data(county.adjacency)
 #' data(USAcities)
-#' IAcities <- subset(USAcities,state_id=="IA")
+#' IAcities <- subset(USAcities,state_id == "IA")
 #' countyname <- unique(IAcities$county_name)
-#' A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+#' A <- get_adj_mat(county.adjacency, countyname, c("IA"))
 #' \donttest{
-#' res0 <- BNB(y, X, A, nchain=2, niter=100, nburn=20, nthin=1)
+#' res0 <- BNB(y, X, A, nchain = 2, niter = 100, nburn = 20, nthin = 1)
 #' }
 #'
 #' @export
 
-BNB <- function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
+BNB <- function(y, X, A, nchain = 3, niter = 100, nburn = 20, nthin = 1){
+
+  ## Run the necessary checks
+  if(!is.vector(y)){stop("y must be a vector")}
+  if(!is.matrix(X)){stop("X must be a matrix")}
+  if(!is.matrix(A)){stop("A must be a matrix")}
+  if(nchain < 1){stop("nchain must be a positive integer")}
+  if(niter < 1){stop("nsim must be a positive integer")}
+  if(nburn < 0){stop("nburn must be a non-negative integer")}
+  if(nthin < 1){stop("nthin must be a positive integer")}
+  y <- as.numeric(y)
+  if(min(y, na.rm = T) < 0){stop("y must be non-negative")}
+  if(!is.numeric(X)){stop("X must be numeric")}
+  if(!is.numeric(A)){stop("A must be numeric")}
 
   N <- length(y)
   n <- nrow(A)			    # Number of spatial units
   nt <- N/n
   nis <- rep(nt,n) 		# Number of individuals per county; here it's balanced -- 50 per county per year
   # Note: may need to lower proposal variance, s, below as n_i increases
-  sid <-rep(1:n,nis)
-  tid <-rep(1:nis[1],n)
+  sid <-rep(1:n, nis)
+  tid <-rep(1:nis[1], n)
   N <-length(sid) 		  # Total number of observations
   p <- ncol(X)
-  if(is.null(colnames(X))){colnames(X) <- c("intercept", paste0("X",1:(ncol(X)-1)))}
+  if(is.null(colnames(X))){colnames(X) <- c("intercept", paste0("X", 1:(ncol(X)-1)))}
 
   ##########
   # Priors #
   ##########
-  alpha0 <- beta0 <- rep(0,p)
-  T0a <- diag(.01,p)
-  T0b <- diag(.01,p)         # Uniform or Gamma(0.01,0.01) prior for r depending on MH or Gibbs
+  alpha0 <- beta0 <- rep(0, p)
+  T0a <- diag(0.01, p)
+  T0b <- diag(0.01, p)         # Uniform or Gamma(0.01,0.01) prior for r depending on MH or Gibbs
   s <- 0.0003                # Proposal variance  -- NOTE: may need to lower this as n_i increases
   kappa <- 0.999999
-  Q <- spam::as.spam(diag(apply(A,1,sum))-kappa*A)
+  Q <- spam::as.spam(diag(apply(A, 1, "sum")) - kappa*A)
 
   ############
   # Num Sims #
   ############
-  lastit <- (niter-nburn)/nthin	# Last stored value
+  lastit <- (niter - nburn)/nthin	# Last stored value
 
   ############
   # Store #
   ############
-  Beta <- array(0,c(lastit,p,nchain))
+  Beta <- array(0, c(lastit, p, nchain))
   colnames(Beta) <- colnames(X)
-  R <- matrix(0,lastit,nchain)
-  Eta <- array(0,c(lastit,N,nchain))
+  R <- matrix(0, lastit, nchain)
+  Eta <- array(0, c(lastit, N, nchain))
 
   for(chain in 1:nchain){
 
@@ -89,10 +102,10 @@ BNB <- function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
     beta <- alpha <- rnorm(p)
     r <- 1
     Acc <- 0
-    y1 <- rep(0,N)             # At risk indicator (this is W in paper)
-    y1[y>0] <- 1               # If y>0, then at risk w.p. 1
-    N0 <- length(y[y==0])      # Number of observed 0's
-    q <- rep(.5,N)             # 1-p=1/(1+exp(X%*%alpha)), used for updating y1
+    y1 <- rep(0, N)             # At risk indicator (this is W in paper)
+    y1[y > 0] <- 1               # If y>0, then at risk w.p. 1
+    N0 <- length(y[y == 0])      # Number of observed 0's
+    q <- rep(0.5, N)             # 1-p=1/(1+exp(X%*%alpha)), used for updating y1
 
     ########
     # MCMC #
@@ -101,36 +114,35 @@ BNB <- function(y, X, A, nchain=3, niter=100, nburn=20, nthin=1){
     for (i in 1:niter){
 
       # Update r
-      rnew <- msm::rtnorm(1,r,sqrt(s),lower=0)       # Treat r as continuous
-      ratio <- sum(dnbinom(y,rnew,q,log=T))-sum(dnbinom(y,r,q,log=T))+
-        msm::dtnorm(r,rnew,sqrt(s),0,log=T) - msm::dtnorm(rnew,r,sqrt(s),0,log=T)   # Uniform Prior for R
+      rnew <- msm::rtnorm(1, r, sqrt(s), lower = 0)       # Treat r as continuous
+      ratio <- sum(dnbinom(y, rnew, q, log = T)) - sum(dnbinom(y, r, q, log = T)) +
+        msm::dtnorm(r, rnew, sqrt(s), 0, log = T) - msm::dtnorm(rnew, r, sqrt(s), 0, log = T)   # Uniform Prior for R
       # Proposal not symmetric
-      if (log(runif(1))<ratio) {
+      if (log(runif(1)) < ratio) {
         r <- rnew
-        Acc <- Acc+1
+        Acc <- Acc + 1
       }
 
       # Update beta
       eta <- X%*%beta
-      w <- BayesLogit::rpg(N,y+r,eta)                               # Polya weights
-      z <- (y-r)/(2*w)
-      v <- solve(crossprod(X*sqrt(w))+T0b)
-      m <- v%*%(T0b%*%beta0+t(sqrt(w)*X)%*%(sqrt(w)*(z)))
-      beta <- c(spam::rmvnorm(1,m,v))
+      w <- BayesLogit::rpg(N, y + r, eta)                               # Polya weights
+      z <- (y - r)/(2*w)
+      v <- solve(crossprod(X*sqrt(w)) + T0b)
+      m <- v%*%(T0b%*%beta0 + t(sqrt(w)*X)%*%(sqrt(w)*(z)))
+      beta <- c(spam::rmvnorm(1, m, v))
 
       # Store
-      if (i> nburn & i%%nthin==0) {
-        j <- (i-nburn)/nthin
+      if (i > nburn & i%%nthin == 0) {
+        j <- (i - nburn)/nthin
         Beta[j,,chain] <- beta
         R[j,chain] <- r
         Eta[j,,chain] <- eta
       }
 
-      # if (i%%10==0) print(paste(chain, "/", nchain,"chain | ",round(i/niter*100,2),"% completed |","Test:",conv.test(R[,chain])))
     }
   }
 
-  list_params <- list(Alpha=NULL, Beta=Beta, R=R, Eta1=Eta)
+  list_params <- list("Alpha" = NULL, "Beta" = Beta, "R" = R, "Eta1" = Eta)
   class(list_params) <- "DCMB"
   return(list_params)
 }

@@ -5,7 +5,7 @@
 \title{Fit a Bayesian Negative Binomial Model}
 \usage{
 BNB(y, X, A,
-           nchain=3, niter=100, nburn=20, nthin=1)
+           nchain = 3, niter = 100, nburn = 20, nthin = 1)
 }
 \arguments{
 \item{y}{vector of counts, must be non-negative}
@@ -31,14 +31,14 @@ Generate posterior samples for the parameters in a Bayesian Negative Binomial Mo
 \examples{
 data(simdat)
 y <- simdat$y
-X <- cbind(simdat$V1,simdat$x)
+X <- cbind(simdat$V1, simdat$x)
 data(county.adjacency)
 data(USAcities)
-IAcities <- subset(USAcities,state_id=="IA")
+IAcities <- subset(USAcities,state_id == "IA")
 countyname <- unique(IAcities$county_name)
-A <- get_adj_mat(county.adjacency,countyname,c("IA"))
+A <- get_adj_mat(county.adjacency, countyname, c("IA"))
 \donttest{
-res0 <- BNB(y, X, A, nchain=2, niter=100, nburn=20, nthin=1)
+res0 <- BNB(y, X, A, nchain = 2, niter = 100, nburn = 20, nthin = 1)
 }
 
 }
